@@ -4,3 +4,6 @@
 [submodule "lib3rd/rxjava.git"]
 	path = lib3rd/rxjava.git
 	url = https://github.com/ReactiveX/RxJava.git
+[submodule "lib3rd/catch.git"]
+	path = lib3rd/catch.git
+	url = https://github.com/philsquared/Catch.git
