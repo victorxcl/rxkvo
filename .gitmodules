@@ -1,0 +1,6 @@
+[submodule "lib3rd/rxcpp.git"]
+	path = lib3rd/rxcpp.git
+	url = https://github.com/Reactive-Extensions/RxCpp.git
+[submodule "lib3rd/rxjava.git"]
+	path = lib3rd/rxjava.git
+	url = https://github.com/ReactiveX/RxJava.git
