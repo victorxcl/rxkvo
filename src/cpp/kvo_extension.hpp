@@ -4,7 +4,7 @@ class kvo_variable
 {
     typedef kvo_variable self_t;
 public:
-    self_t&operator = (T&&x)
+    self_t&operator = (const T&x)
     {
         this->subject.get_subscriber().on_next(x);
         return *this;
