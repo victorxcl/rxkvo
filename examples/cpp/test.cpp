@@ -163,3 +163,8 @@ SCENARIO("test kvo_varibale", "")
         }
     }
 }
+
+SCENARIO("test kvo_collection", "")
+{
+    
+}

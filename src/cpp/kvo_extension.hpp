@@ -53,7 +53,15 @@ public:
     }
 };
 
-
-class kvo_array
+template<typename Collection, typename Index=int>
+class kvo_collection
 {
+    typedef Collection collection_type;
+    typedef typename collection_type::value_type value_type;
+    collection_type collection;
+public:
+    rxcpp::subjects::subject<std::initializer_list<value_type>> subject_setting;
+    rxcpp::subjects::subject<std::initializer_list<value_type>> subject_insertion;
+    rxcpp::subjects::subject<std::initializer_list<value_type>> subject_removal;
+    rxcpp::subjects::subject<std::initializer_list<value_type>> subject_replacement;
 };
