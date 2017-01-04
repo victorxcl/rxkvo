@@ -53,15 +53,36 @@ public:
     }
 };
 
-template<typename Collection, typename Index=int>
+template<typename Collection>
 class kvo_collection
 {
     typedef Collection collection_type;
     typedef typename collection_type::value_type value_type;
+    typedef typename collection_type::difference_type difference_type;
     collection_type collection;
 public:
     rxcpp::subjects::subject<std::initializer_list<value_type>> subject_setting;
     rxcpp::subjects::subject<std::initializer_list<value_type>> subject_insertion;
     rxcpp::subjects::subject<std::initializer_list<value_type>> subject_removal;
     rxcpp::subjects::subject<std::initializer_list<value_type>> subject_replacement;
+    
+    rxcpp::subjects::subject<std::initializer_list<difference_type>> subject_setting_index;
+    rxcpp::subjects::subject<std::initializer_list<difference_type>> subject_insertion_index;
+    rxcpp::subjects::subject<std::initializer_list<difference_type>> subject_removal_index;
+    rxcpp::subjects::subject<std::initializer_list<difference_type>> subject_replacement_index;
+    
+
+    void set(const std::initializer_list<value_type>&x)
+    {
+        if (x.size() > 0)
+        {
+            //this->subject_setting_index.get_subscriber().on_next(x);
+            this->subject_setting.get_subscriber().on_next(x);
+        }
+    }
+    
+    collection_type& operator()()const
+    {
+        return this->collection;
+    }
 };

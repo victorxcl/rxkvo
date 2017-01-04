@@ -166,5 +166,9 @@ SCENARIO("test kvo_varibale", "")
 
 SCENARIO("test kvo_collection", "")
 {
-    
+    GIVEN("a vector")
+    {
+        kvo_collection<std::vector<int>> IDs;
+        IDs.set({100,200,300,400,500,600,700,800,900});
+    }
 }
