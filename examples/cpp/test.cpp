@@ -60,7 +60,7 @@ SCENARIO("test kvo_varibale", "")
             }
         }
     }
-    GIVEN("a leader with team members")
+    GIVEN("a leader and a team")
     {
         struct Leader
         {
