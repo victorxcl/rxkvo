@@ -19,6 +19,11 @@ SCENARIO("test kvo_varibale", "")
                 this->fullName = x.first + " " + x.second;
             });
         }
+        Person(std::string _firstName, std::string _lastName):Person()
+        {
+            this->firstName = _firstName;
+            this->lastName = _lastName;
+        }
     };
     GIVEN("a person")
     {
@@ -64,30 +69,46 @@ SCENARIO("test kvo_varibale", "")
         struct Team
         {
             kvo_variable<Leader> leader;
-            Person members[3];
             kvo_variable<std::string> leader_fullName;
             Team()
             {
-                //leader
+                leader.subject.get_observable()
+                .map([](const Leader&x){ return x.member.subject.get_observable(); }).switch_on_next()
+                .map([](const Person&x){ return x.fullName.subject.get_observable(); }).switch_on_next()
+                .subscribe([this](const std::string&x){ this->leader_fullName = x; });
             }
         }team;
         
-        REQUIRE(team.leader_fullName.get() == "");
+        REQUIRE(team.leader_fullName() == " ");
         
-        team.members[0].firstName = "Hello"; team.members[0].lastName = "World";
-        team.members[1].firstName = "Good" ; team.members[1].lastName = "Luck";
-        team.members[2].firstName = "Happy"; team.members[2].lastName = "New Year";
+        REQUIRE(team.leader().member().firstName() == "");
+        REQUIRE(team.leader().member().lastName() == "");
+        REQUIRE(team.leader().member().fullName() == " ");
         
-        REQUIRE(team.leader.get().member.get().firstName.get() == "");
-        REQUIRE(team.leader.get().member.get().lastName.get() == "");
-        REQUIRE(team.leader.get().member.get().fullName.get() == " ");
-        
-        WHEN("0 as leader")
+        WHEN("modify leader's member")
         {
-            team.leader.get().member = team.members[0];
-            REQUIRE(team.leader.get().member.get().firstName.get() == "Hello");
-            REQUIRE(team.leader.get().member.get().lastName.get() == "World");
-            REQUIRE(team.leader.get().member.get().fullName.get() == "Hello World");
+            team.leader().member = Person("Hello", "World");
+            REQUIRE(team.leader().member().firstName() == "Hello");
+            REQUIRE(team.leader().member().lastName() == "World");
+            REQUIRE(team.leader().member().fullName() == "Hello World");
+            REQUIRE(team.leader_fullName() == "Hello World");
+            
+            AND_WHEN("modify leader's member's firstName")
+            {
+                team.leader().member().firstName = "Good";
+                REQUIRE(team.leader().member().firstName() == "Good");
+                REQUIRE(team.leader().member().lastName() == "World");
+                REQUIRE(team.leader().member().fullName() == "Good World");
+                REQUIRE(team.leader_fullName() == "Good World");
+            }
+            AND_WHEN("modify leader's member's lastName")
+            {
+                team.leader().member().lastName = "Luck";
+                REQUIRE(team.leader().member().firstName() == "Hello");
+                REQUIRE(team.leader().member().lastName() == "Luck");
+                REQUIRE(team.leader().member().fullName() == "Hello Luck");
+                REQUIRE(team.leader_fullName() == "Hello Luck");
+            }
         }
     }
 }

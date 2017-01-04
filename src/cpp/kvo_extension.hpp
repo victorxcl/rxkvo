@@ -17,6 +17,10 @@ public:
     {
         return this->subject.get_value();
     }
+    T operator()()const
+    {
+        return this->subject.get_value();
+    }
     rxcpp::subjects::behavior<T> subject = rxcpp::subjects::behavior<T>(T());
 };
 
