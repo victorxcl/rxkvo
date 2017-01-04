@@ -26,20 +26,20 @@ class kvo_variable
     typedef kvo_variable self_t;
 public:
     rxcpp::subjects::behavior<T> subject = rxcpp::subjects::behavior<T>(T());
-    
-    self_t&operator = (const T&x)
+    void set(const T&x)
     {
         this->subject.get_subscriber().on_next(x);
-        return *this;
-    }
-    operator T()const
-    {
-        return this->subject.get_value();
     }
     T get()const
     {
         return this->subject.get_value();
     }
+    self_t&operator = (const T&x)
+    {
+        set(x);
+        return *this;
+    }
+    
     T operator()()const
     {
         return this->subject.get_value();
