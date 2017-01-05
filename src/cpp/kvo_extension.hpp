@@ -59,6 +59,8 @@ class kvo_collection
     typedef Collection collection_type;
     typedef typename collection_type::value_type value_type;
     typedef typename collection_type::difference_type difference_type;
+    typedef typename collection_type::const_iterator const_iterator;
+    typedef typename collection_type::iterator iterator;
     collection_type collection;
 public:
     rxcpp::subjects::subject<std::vector<value_type>> subject_setting;
@@ -70,12 +72,12 @@ public:
     rxcpp::subjects::subject<std::vector<difference_type>> subject_removal_index;
     rxcpp::subjects::subject<std::vector<difference_type>> subject_replacement_index;
     
-    collection_type&get()const
+    collection_type&get()
     {
         return this->collection;
     }
     
-    collection_type& operator()()const
+    collection_type& operator()()
     {
         return this->get();
     }
@@ -85,7 +87,22 @@ public:
         if (x.size() > 0)
         {
             this->subject_setting.get_subscriber().on_next(x);
+            this->collection = x;
         }
+    }
+    
+    const_iterator const_iterator_at(difference_type i)const
+    {
+        auto it = this->collection.begin();
+        std::advance(it, i);
+        return it;
+    }
+    
+    iterator iterator_at(difference_type i)
+    {
+        auto it = this->collection.begin();
+        std::advance(it, i);
+        return it;
     }
     
     void insert(const std::vector<value_type>&x, const std::vector<difference_type>&indices)
@@ -95,8 +112,15 @@ public:
         {
             subject_insertion_index.get_subscriber().on_next(indices);
             subject_insertion.get_subscriber().on_next(x);
+            
+            for (difference_type i=0;i<x.size();i++)
+            {
+                auto it = const_iterator_at(indices.at(i));
+                this->collection.insert(it, x.at(i));
+            }
         }
     }
+    
     void remove(const std::vector<difference_type>&indices)
     {
         if (indices.size() > 0)
@@ -109,15 +133,26 @@ public:
                 items.push_back(*it);
             }
             subject_removal.get_subscriber().on_next(items);
+            
+            for (auto it=indices.crbegin(); it!=indices.crend(); it++)
+            {
+                this->collection.erase(const_iterator_at(*it));
+            }
         }
     }
+    
     void replace(const std::vector<difference_type>&indices, const std::vector<value_type>&x)
     {
         assert(x.size() == indices.size());
         if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
         {
-            subject_replacement_index.get_subscriber().on_next(x);
+            subject_replacement_index.get_subscriber().on_next(indices);
             subject_replacement.get_subscriber().on_next(x);
+            
+            for (difference_type i=0;i<x.size();i++)
+            {
+                *iterator_at(indices.at(i)) = x.at(i);
+            }
         }
     }
 };

@@ -164,11 +164,48 @@ SCENARIO("test kvo_varibale", "")
     }
 }
 
-SCENARIO("test kvo_collection", "")
+SCENARIO("test basic kvo_collection operations", "")
 {
     GIVEN("a vector")
     {
         kvo_collection<std::vector<int>> IDs;
-        IDs.set({100,200,300,400,500,600,700,800,900});
+        WHEN("set a list of data")
+        {
+            IDs.set({100,200,300,400,500,600,700,800,900});
+            REQUIRE(IDs.get() == std::vector<int>({100,200,300,400,500,600,700,800,900}));
+            REQUIRE(IDs() == std::vector<int>({100,200,300,400,500,600,700,800,900}));
+            
+            IDs.set({100,200,300,400});
+            REQUIRE(IDs.get() == std::vector<int>({100,200,300,400}));
+            REQUIRE(IDs() == std::vector<int>({100,200,300,400}));
+            
+            THEN("insert {99,88} at {1, 3}")
+            {
+                IDs.insert({99, 88}, {1, 3});
+                REQUIRE(IDs() == std::vector<int>({100,99,200,88,300,400}));
+            }
+            THEN("insert {99,88} at {4, 5}")
+            {
+                IDs.insert({99, 88}, {4, 5});
+                REQUIRE(IDs() == std::vector<int>({100,200,300,400,99,88}));
+            }
+            THEN("insert {99,88,77} at {1, 2, 4}")
+            {
+                IDs.insert({99, 88, 77}, {1, 2, 4});
+                REQUIRE(IDs() == std::vector<int>({100,99,88,200,77,300,400}));
+            }
+            
+            THEN("remove objects at indices {1,3}")
+            {
+                IDs.remove({1, 3});
+                REQUIRE(IDs() == std::vector<int>({100,300}));
+            }
+            
+            THEN("replace objects at indices {1,3}")
+            {
+                IDs.replace({1, 3}, {99, 88});
+                REQUIRE(IDs() == std::vector<int>({100,99,300,88}));
+            }
+        }
     }
 }
