@@ -90,7 +90,8 @@ public:
     
     void insert(const std::vector<value_type>&x, const std::vector<difference_type>&indices)
     {
-        if (x.size() > 0 && indices.size() > 0)
+        assert(x.size() == indices.size());
+        if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
         {
             subject_insertion_index.get_subscriber().on_next(indices);
             subject_insertion.get_subscriber().on_next(x);
@@ -112,7 +113,8 @@ public:
     }
     void replace(const std::vector<difference_type>&indices, const std::vector<value_type>&x)
     {
-        if (x.size() > 0 && indices.size() > 0)
+        assert(x.size() == indices.size());
+        if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
         {
             subject_replacement_index.get_subscriber().on_next(x);
             subject_replacement.get_subscriber().on_next(x);
