@@ -169,42 +169,64 @@ SCENARIO("test basic kvo_collection operations", "")
     GIVEN("a vector")
     {
         kvo_collection<std::vector<int>> IDs;
-        WHEN("set a list of data")
+        int ID_count = 0;
+        THEN("watch IDs' count")
         {
-            IDs.set({100,200,300,400,500,600,700,800,900});
-            REQUIRE(IDs.get() == std::vector<int>({100,200,300,400,500,600,700,800,900}));
-            REQUIRE(IDs() == std::vector<int>({100,200,300,400,500,600,700,800,900}));
+            typedef decltype(IDs)::rx_notify_value rx_notify_value;
+            rxcpp::observable<>::empty<rx_notify_value>()
+            .merge(IDs.subject_setting.get_observable(),
+                   IDs.subject_insertion.get_observable(),
+                   IDs.subject_removal.get_observable(),
+                   IDs.subject_replacement.get_observable())
+            .subscribe([&ID_count, &IDs](const rx_notify_value&x){
+                ID_count = IDs().size();
+            });
+            REQUIRE(ID_count == 0);
             
-            IDs.set({100,200,300,400});
-            REQUIRE(IDs.get() == std::vector<int>({100,200,300,400}));
-            REQUIRE(IDs() == std::vector<int>({100,200,300,400}));
-            
-            THEN("insert {99,88} at {1, 3}")
+            WHEN("set a list of data")
             {
-                IDs.insert({99, 88}, {1, 3});
-                REQUIRE(IDs() == std::vector<int>({100,99,200,88,300,400}));
-            }
-            THEN("insert {99,88} at {4, 5}")
-            {
-                IDs.insert({99, 88}, {4, 5});
-                REQUIRE(IDs() == std::vector<int>({100,200,300,400,99,88}));
-            }
-            THEN("insert {99,88,77} at {1, 2, 4}")
-            {
-                IDs.insert({99, 88, 77}, {1, 2, 4});
-                REQUIRE(IDs() == std::vector<int>({100,99,88,200,77,300,400}));
-            }
-            
-            THEN("remove objects at indices {1,3}")
-            {
-                IDs.remove({1, 3});
-                REQUIRE(IDs() == std::vector<int>({100,300}));
-            }
-            
-            THEN("replace objects at indices {1,3}")
-            {
-                IDs.replace({1, 3}, {99, 88});
-                REQUIRE(IDs() == std::vector<int>({100,99,300,88}));
+                IDs.set({100,200,300,400,500,600,700,800,900});
+                REQUIRE(IDs.get() == std::vector<int>({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(IDs() == std::vector<int>({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(ID_count == 9);
+                
+                IDs.set({100,200,300,400});
+                REQUIRE(IDs.get() == std::vector<int>({100,200,300,400}));
+                REQUIRE(IDs() == std::vector<int>({100,200,300,400}));
+                REQUIRE(ID_count == 4);
+                
+                THEN("insert {99,88} at {1, 3}")
+                {
+                    IDs.insert({99, 88}, {1, 3});
+                    REQUIRE(IDs() == std::vector<int>({100,99,200,88,300,400}));
+                    REQUIRE(ID_count == 6);
+                }
+                THEN("insert {99,88} at {4, 5}")
+                {
+                    IDs.insert({99, 88}, {4, 5});
+                    REQUIRE(IDs() == std::vector<int>({100,200,300,400,99,88}));
+                    REQUIRE(ID_count == 6);
+                }
+                THEN("insert {99,88,77} at {1, 2, 4}")
+                {
+                    IDs.insert({99, 88, 77}, {1, 2, 4});
+                    REQUIRE(IDs() == std::vector<int>({100,99,88,200,77,300,400}));
+                    REQUIRE(ID_count == 7);
+                }
+                
+                THEN("remove objects at indices {1,3}")
+                {
+                    IDs.remove({1, 3});
+                    REQUIRE(IDs() == std::vector<int>({100,300}));
+                    REQUIRE(ID_count == 2);
+                }
+                
+                THEN("replace objects at indices {1,3}")
+                {
+                    IDs.replace({1, 3}, {99, 88});
+                    REQUIRE(IDs() == std::vector<int>({100,99,300,88}));
+                    REQUIRE(ID_count == 4);
+                }
             }
         }
     }

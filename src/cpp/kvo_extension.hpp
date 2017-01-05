@@ -56,21 +56,35 @@ public:
 template<typename Collection>
 class kvo_collection
 {
-    typedef Collection collection_type;
-    typedef typename collection_type::value_type value_type;
-    typedef typename collection_type::difference_type difference_type;
-    typedef typename collection_type::const_iterator const_iterator;
-    typedef typename collection_type::iterator iterator;
+public:
+    typedef Collection                                  collection_type;
+    typedef typename collection_type::value_type        value_type;
+    typedef typename collection_type::difference_type   difference_type;
+    typedef typename collection_type::const_iterator    const_iterator;
+    typedef typename collection_type::iterator          iterator;
+    typedef std::vector<value_type>                     rx_notify_value;
+    typedef std::vector<difference_type>                rx_notify_index;
+private:
     collection_type collection;
 public:
-    rxcpp::subjects::subject<std::vector<value_type>> subject_setting;
-    rxcpp::subjects::subject<std::vector<value_type>> subject_insertion;
-    rxcpp::subjects::subject<std::vector<value_type>> subject_removal;
-    rxcpp::subjects::subject<std::vector<value_type>> subject_replacement;
+    rxcpp::subjects::subject<rx_notify_value> subject_setting_will;
+    rxcpp::subjects::subject<rx_notify_value> subject_insertion_will;
+    rxcpp::subjects::subject<rx_notify_value> subject_removal_will;
+    rxcpp::subjects::subject<rx_notify_value> subject_replacement_will;
     
-    rxcpp::subjects::subject<std::vector<difference_type>> subject_insertion_index;
-    rxcpp::subjects::subject<std::vector<difference_type>> subject_removal_index;
-    rxcpp::subjects::subject<std::vector<difference_type>> subject_replacement_index;
+    rxcpp::subjects::subject<rx_notify_value> subject_setting_did;
+    rxcpp::subjects::subject<rx_notify_value> subject_insertion_did;
+    rxcpp::subjects::subject<rx_notify_value> subject_removal_did;
+    rxcpp::subjects::subject<rx_notify_value> subject_replacement_did;
+    
+    rxcpp::subjects::subject<rx_notify_value>&subject_setting = subject_setting_did;
+    rxcpp::subjects::subject<rx_notify_value>&subject_insertion = subject_insertion_did;
+    rxcpp::subjects::subject<rx_notify_value>&subject_removal = subject_removal_did;
+    rxcpp::subjects::subject<rx_notify_value>&subject_replacement = subject_replacement_did;
+    
+    rxcpp::subjects::subject<rx_notify_index> subject_insertion_index;
+    rxcpp::subjects::subject<rx_notify_index> subject_removal_index;
+    rxcpp::subjects::subject<rx_notify_index> subject_replacement_index;
     
     collection_type&get()
     {
@@ -86,8 +100,9 @@ public:
     {
         if (x.size() > 0)
         {
-            this->subject_setting.get_subscriber().on_next(x);
+            this->subject_setting_will.get_subscriber().on_next(x);
             this->collection = x;
+            this->subject_setting_did.get_subscriber().on_next(x);
         }
     }
     
@@ -111,13 +126,16 @@ public:
         if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
         {
             subject_insertion_index.get_subscriber().on_next(indices);
-            subject_insertion.get_subscriber().on_next(x);
+            
+            subject_insertion_will.get_subscriber().on_next(x);
             
             for (difference_type i=0;i<x.size();i++)
             {
                 auto it = const_iterator_at(indices.at(i));
                 this->collection.insert(it, x.at(i));
             }
+            
+            subject_insertion_did.get_subscriber().on_next(x);
         }
     }
     
@@ -126,18 +144,22 @@ public:
         if (indices.size() > 0)
         {
             subject_removal_index.get_subscriber().on_next(indices);
+            
             std::vector<value_type> items;
             for (const auto&i:indices)
             {
                 auto it = this->collection.begin(); std::advance(it, i);
                 items.push_back(*it);
             }
-            subject_removal.get_subscriber().on_next(items);
+            
+            subject_removal_will.get_subscriber().on_next(items);
             
             for (auto it=indices.crbegin(); it!=indices.crend(); it++)
             {
                 this->collection.erase(const_iterator_at(*it));
             }
+            
+            subject_removal_did.get_subscriber().on_next(items);
         }
     }
     
@@ -147,12 +169,15 @@ public:
         if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
         {
             subject_replacement_index.get_subscriber().on_next(indices);
-            subject_replacement.get_subscriber().on_next(x);
+            
+            subject_replacement_will.get_subscriber().on_next(x);
             
             for (difference_type i=0;i<x.size();i++)
             {
                 *iterator_at(indices.at(i)) = x.at(i);
             }
+            
+            subject_replacement_did.get_subscriber().on_next(x);
         }
     }
 };
