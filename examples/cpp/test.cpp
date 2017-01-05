@@ -166,7 +166,7 @@ SCENARIO("test kvo_varibale", "")
 
 SCENARIO("test basic kvo_collection operations", "")
 {
-    GIVEN("a vector")
+    GIVEN("a kvo_collection with std::vector")
     {
         kvo_collection<std::vector<int>> IDs;
         int ID_count = 0;
@@ -214,6 +214,13 @@ SCENARIO("test basic kvo_collection operations", "")
                     REQUIRE(ID_count == 7);
                 }
                 
+                THEN("insert {99,88,77} at end")
+                {
+                    IDs.insert({99, 88, 77});
+                    REQUIRE(IDs() == std::vector<int>({100,200,300,400,99,88,77}));
+                    REQUIRE(ID_count == 7);
+                }
+                
                 THEN("remove objects at indices {1,3}")
                 {
                     IDs.remove({1, 3});
@@ -226,6 +233,20 @@ SCENARIO("test basic kvo_collection operations", "")
                     IDs.replace({1, 3}, {99, 88});
                     REQUIRE(IDs() == std::vector<int>({100,99,300,88}));
                     REQUIRE(ID_count == 4);
+                }
+                
+                THEN("remove all items")
+                {
+                    IDs.set({});
+                    REQUIRE(IDs() == std::vector<int>({}));
+                    REQUIRE(ID_count == 0);
+                }
+                
+                THEN("remove all items")
+                {
+                    IDs.remove_all();
+                    REQUIRE(IDs() == std::vector<int>({}));
+                    REQUIRE(ID_count == 0);
                 }
             }
         }

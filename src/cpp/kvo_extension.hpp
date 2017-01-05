@@ -96,9 +96,9 @@ public:
         return this->get();
     }
     
-    void set(const collection_type&x)
+    void set(const rx_notify_value&x)
     {
-        if (x.size() > 0)
+        if (this->collection.size() > 0 || (this->collection.size() == 0 && x.size() > 0))
         {
             this->subject_setting_will.get_subscriber().on_next(x);
             this->collection = x;
@@ -106,7 +106,7 @@ public:
         }
     }
     
-    const_iterator const_iterator_at(difference_type i)const
+    const_iterator iterator_at(difference_type i) const
     {
         auto it = this->collection.begin();
         std::advance(it, i);
@@ -120,7 +120,7 @@ public:
         return it;
     }
     
-    void insert(const std::vector<value_type>&x, const std::vector<difference_type>&indices)
+    void insert(const rx_notify_value&x, const rx_notify_index&indices)
     {
         assert(x.size() == indices.size());
         if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
@@ -131,7 +131,7 @@ public:
             
             for (difference_type i=0;i<x.size();i++)
             {
-                auto it = const_iterator_at(indices.at(i));
+                auto it = iterator_at(indices.at(i));
                 this->collection.insert(it, x.at(i));
             }
             
@@ -139,31 +139,51 @@ public:
         }
     }
     
-    void remove(const std::vector<difference_type>&indices)
+    void insert(const rx_notify_value&x)
+    {
+        if (x.size() > 0)
+        {
+            rx_notify_index indices;
+            for (difference_type i=0; i<x.size(); i++)
+                indices.push_back(this->collection.size() + i);
+            
+            subject_insertion_index.get_subscriber().on_next(indices);
+            
+            subject_insertion_will.get_subscriber().on_next(x);
+            
+            this->collection.insert(this->collection.end(), x.begin(), x.end());
+            
+            subject_insertion_did.get_subscriber().on_next(x);
+        }
+    }
+    
+    void remove(const rx_notify_index&indices)
     {
         if (indices.size() > 0)
         {
             subject_removal_index.get_subscriber().on_next(indices);
             
-            std::vector<value_type> items;
+            rx_notify_value items;
             for (const auto&i:indices)
-            {
-                auto it = this->collection.begin(); std::advance(it, i);
-                items.push_back(*it);
-            }
+                items.push_back(*iterator_at(i));
             
             subject_removal_will.get_subscriber().on_next(items);
             
             for (auto it=indices.crbegin(); it!=indices.crend(); it++)
             {
-                this->collection.erase(const_iterator_at(*it));
+                this->collection.erase(iterator_at(*it));
             }
             
             subject_removal_did.get_subscriber().on_next(items);
         }
     }
     
-    void replace(const std::vector<difference_type>&indices, const std::vector<value_type>&x)
+    void remove_all()
+    {
+        this->set({});
+    }
+    
+    void replace(const rx_notify_index&indices, const rx_notify_value&x)
     {
         assert(x.size() == indices.size());
         if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
