@@ -24,7 +24,7 @@ namespace kvo
     template<typename T>
     class variable
     {
-        typedef variable self_t;
+        typedef variable<T> self_t;
     public:
         rxcpp::subjects::behavior<T> subject = rxcpp::subjects::behavior<T>(T());
         void set(const T&x)
@@ -77,7 +77,7 @@ namespace kvo
             rx_notify_index indices_for_append_items(const rx_notify_value&x)
             {
                 rx_notify_index indices;
-                for (difference_type i=0; i<x.size(); i++)
+                for (std::size_t i=0; i<x.size(); i++)
                 {
                     indices.push_back(_c.size() + i);
                 }
@@ -104,7 +104,7 @@ namespace kvo
             
             void insert(const rx_notify_value&x, const rx_notify_index&indices)
             {
-                for (difference_type i=0;i<x.size();i++)
+                for (std::size_t i=0;i<x.size();i++)
                 {
                     auto it_i = indices.begin(); std::advance(it_i, i);
                     auto it_x = x.begin(); std::advance(it_x, i);

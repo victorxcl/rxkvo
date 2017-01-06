@@ -3,6 +3,9 @@
 #include <catch.hpp>
 #include "kvo_extension.hpp"
 
+#pragma warning(disable:4503)
+
+
 SCENARIO("test kvo_varibale", "")
 {
     struct Person
@@ -15,8 +18,8 @@ SCENARIO("test kvo_varibale", "")
         {
             firstName.subject.get_observable()
             .combine_latest(lastName.subject.get_observable())
-            .subscribe([this](std::pair<std::string,std::string>x){
-                this->fullName = x.first + " " + x.second;
+            .subscribe([this](std::tuple<std::string,std::string>x){
+                this->fullName = std::get<0>(x) + " " + std::get<1>(x);
             });
         }
         Person(std::string _firstName, std::string _lastName):Person()
@@ -64,6 +67,7 @@ SCENARIO("test kvo_varibale", "")
     {
         struct Leader
         {
+			Leader() {}
             kvo::variable<Person> member;
         };
         AND_THEN("given a team with rx key path")
@@ -170,7 +174,7 @@ SCENARIO("test basic kvo_collection operations", "")
     {
         typedef std::vector<int> collection_t;
         kvo::collection<collection_t> IDs;
-        int ID_count = 0;
+        std::size_t ID_count = 0;
         THEN("watch IDs' count")
         {
             typedef decltype(IDs)::rx_notify_value rx_notify_value;
@@ -256,7 +260,7 @@ SCENARIO("test basic kvo_collection operations", "")
     {
         typedef std::list<int> collection_t;
         kvo::collection<collection_t> IDs;
-        int ID_count = 0;
+        std::size_t ID_count = 0;
         THEN("watch IDs' count")
         {
             typedef decltype(IDs)::rx_notify_value rx_notify_value;
@@ -342,7 +346,7 @@ SCENARIO("test basic kvo_collection operations", "")
     {
         typedef std::set<int> collection_t;
         kvo::collection<collection_t> IDs;
-        int ID_count = 0;
+		std::size_t ID_count = 0;
         THEN("watch IDs' count")
         {
             typedef decltype(IDs)::rx_notify_value rx_notify_value;
@@ -409,7 +413,7 @@ SCENARIO("test basic kvo_collection operations", "")
     {
         typedef std::unordered_set<int> collection_t;
         kvo::collection<collection_t> IDs;
-        int ID_count = 0;
+		std::size_t ID_count = 0;
         THEN("watch IDs' count")
         {
             typedef decltype(IDs)::rx_notify_value rx_notify_value;
