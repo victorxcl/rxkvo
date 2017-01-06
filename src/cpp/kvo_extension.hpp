@@ -195,11 +195,8 @@ namespace kvo
             if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
             {
                 subject_insertion_index.get_subscriber().on_next(indices);
-                
                 subject_insertion_will.get_subscriber().on_next(x);
-                
                 this->worker.insert(x, indices);
-                
                 subject_insertion_did.get_subscriber().on_next(x);
             }
         }
@@ -209,13 +206,9 @@ namespace kvo
             if (x.size() > 0)
             {
                 rx_notify_index indices = this->worker.indices_for_append_items(x);
-                
                 subject_insertion_index.get_subscriber().on_next(indices);
-                
                 subject_insertion_will.get_subscriber().on_next(x);
-                
                 this->worker.insert(x);
-                
                 subject_insertion_did.get_subscriber().on_next(x);
             }
         }
@@ -225,13 +218,9 @@ namespace kvo
             if (indices.size() > 0)
             {
                 subject_removal_index.get_subscriber().on_next(indices);
-                
                 rx_notify_value items = this->worker.items_at_indices(indices);
-                
                 subject_removal_will.get_subscriber().on_next(items);
-                
                 this->worker.remove(indices);
-                
                 subject_removal_did.get_subscriber().on_next(items);
             }
         }
@@ -247,11 +236,8 @@ namespace kvo
             if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
             {
                 subject_replacement_index.get_subscriber().on_next(indices);
-                
                 subject_replacement_will.get_subscriber().on_next(x);
-                
                 this->worker.replace(indices, x);
-                
                 subject_replacement_did.get_subscriber().on_next(x);
             }
         }
