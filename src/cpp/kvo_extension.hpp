@@ -66,7 +66,7 @@ public:
     typedef std::vector<value_type>                     rx_notify_value;
     typedef std::vector<difference_type>                rx_notify_index;
 private:
-    collection_type _c;
+    collection_type                                     _c;
 public:
     
     rx_notify_index indices_for_append_items(const rx_notify_value&x)
@@ -151,9 +151,9 @@ public:
     rxcpp::subjects::subject<rx_notify_value>           subject_removal_did;
     rxcpp::subjects::subject<rx_notify_value>           subject_replacement_did;
     
-    rxcpp::subjects::subject<rx_notify_value>&          subject_setting = subject_setting_did;
-    rxcpp::subjects::subject<rx_notify_value>&          subject_insertion = subject_insertion_did;
-    rxcpp::subjects::subject<rx_notify_value>&          subject_removal = subject_removal_did;
+    rxcpp::subjects::subject<rx_notify_value>&          subject_setting     = subject_setting_did;
+    rxcpp::subjects::subject<rx_notify_value>&          subject_insertion   = subject_insertion_did;
+    rxcpp::subjects::subject<rx_notify_value>&          subject_removal     = subject_removal_did;
     rxcpp::subjects::subject<rx_notify_value>&          subject_replacement = subject_replacement_did;
     
     rxcpp::subjects::subject<rx_notify_index>           subject_insertion_index;
