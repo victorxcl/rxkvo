@@ -139,21 +139,21 @@ namespace detail
     };
 }
 
-template<typename Collection> class operation;
+template<typename Collection> class worker;
 
-template<typename T> class operation<std::vector<T>> :public detail::worker_with_index<std::vector<T>> { };
-template<typename T> class operation<std::list<T>> :public detail::worker_with_index<std::list<T>> { };
+template<typename T> class worker<std::vector<T>> :public detail::worker_with_index<std::vector<T>> { };
+template<typename T> class worker<std::list<T>> :public detail::worker_with_index<std::list<T>> { };
 
-template<typename Collection, typename Operation=operation<Collection>>
+template<typename Collection, typename Worker=worker<Collection>>
 class kvo_collection
 {
 public:
     typedef Collection                                  collection_type;
-    typedef Operation                                   operation_type;
-    typedef typename operation_type::rx_notify_value    rx_notify_value;
-    typedef typename operation_type::rx_notify_index    rx_notify_index;
+    typedef Worker                                      worker_type;
+    typedef typename worker_type::rx_notify_value       rx_notify_value;
+    typedef typename worker_type::rx_notify_index       rx_notify_index;
 private:
-    operation_type                                      operation;
+    worker_type                                         worker;
 public:
     rxcpp::subjects::subject<rx_notify_value>           subject_setting_will;
     rxcpp::subjects::subject<rx_notify_value>           subject_insertion_will;
@@ -174,7 +174,7 @@ public:
     rxcpp::subjects::subject<rx_notify_index>           subject_removal_index;
     rxcpp::subjects::subject<rx_notify_index>           subject_replacement_index;
     
-    collection_type&get() { return this->operation.get(); }
+    collection_type&get() { return this->worker.get(); }
     
     collection_type& operator()() { return this->get(); }
     
@@ -183,7 +183,7 @@ public:
         if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
         {
             this->subject_setting_will.get_subscriber().on_next(x);
-            this->operation.set(x);
+            this->worker.set(x);
             this->subject_setting_did.get_subscriber().on_next(x);
         }
     }
@@ -197,7 +197,7 @@ public:
             
             subject_insertion_will.get_subscriber().on_next(x);
             
-            this->operation.insert(x, indices);
+            this->worker.insert(x, indices);
             
             subject_insertion_did.get_subscriber().on_next(x);
         }
@@ -207,13 +207,13 @@ public:
     {
         if (x.size() > 0)
         {
-            rx_notify_index indices = this->operation.indices_for_append_items(x);
+            rx_notify_index indices = this->worker.indices_for_append_items(x);
             
             subject_insertion_index.get_subscriber().on_next(indices);
             
             subject_insertion_will.get_subscriber().on_next(x);
             
-            this->operation.insert(x);
+            this->worker.insert(x);
             
             subject_insertion_did.get_subscriber().on_next(x);
         }
@@ -225,11 +225,11 @@ public:
         {
             subject_removal_index.get_subscriber().on_next(indices);
             
-            rx_notify_value items = this->operation.items_at_indices(indices);
+            rx_notify_value items = this->worker.items_at_indices(indices);
             
             subject_removal_will.get_subscriber().on_next(items);
             
-            this->operation.remove(indices);
+            this->worker.remove(indices);
             
             subject_removal_did.get_subscriber().on_next(items);
         }
@@ -249,7 +249,7 @@ public:
             
             subject_replacement_will.get_subscriber().on_next(x);
             
-            this->operation.replace(indices, x);
+            this->worker.replace(indices, x);
             
             subject_replacement_did.get_subscriber().on_next(x);
         }
