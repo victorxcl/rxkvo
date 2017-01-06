@@ -53,82 +53,96 @@ public:
     }
 };
 
-template<typename Collection>
-class operation;
-
-template<typename T>
-class operation<std::vector<T>>
+namespace detail
 {
-public:
-    typedef std::vector<T>                              collection_type;
-    typedef typename collection_type::value_type        value_type;
-    typedef typename collection_type::difference_type   difference_type;
-    typedef std::vector<value_type>                     rx_notify_value;
-    typedef std::vector<difference_type>                rx_notify_index;
-private:
-    collection_type                                     _c;
-public:
+    template<typename Collection>
+    struct worker_with_index;
     
-    rx_notify_index indices_for_append_items(const rx_notify_value&x)
+    template<typename ...Args, template<typename...> class Container>
+    struct worker_with_index<Container<Args...>>
     {
-        rx_notify_index indices;
-        for (difference_type i=0; i<x.size(); i++)
+    public:
+        typedef Container<Args...>                          collection_type;
+        typedef typename collection_type::value_type        value_type;
+        typedef typename collection_type::difference_type   difference_type;
+        typedef Container<value_type>                       rx_notify_value;
+        typedef Container<difference_type>                  rx_notify_index;
+        typedef typename collection_type::iterator          iterator;
+        typedef typename collection_type::const_iterator    const_iterator;
+    private:
+        collection_type                                     _c;
+    public:
+        
+        rx_notify_index indices_for_append_items(const rx_notify_value&x)
         {
-            indices.push_back(_c.size() + i);
+            rx_notify_index indices;
+            for (difference_type i=0; i<x.size(); i++)
+            {
+                indices.push_back(_c.size() + i);
+            }
+            return std::move(indices);
         }
-        return std::move(indices);
-    }
-    
-    rx_notify_value items_at_indices(const rx_notify_index&indices)
-    {
-        rx_notify_value items;
-        for (const auto&i:indices)
+        
+        rx_notify_value items_at_indices(const rx_notify_index&indices)
         {
-            auto it = _c.begin(); std::advance(it, i);
-            items.push_back(*it);
+            rx_notify_value items;
+            for (const auto&i:indices)
+            {
+                auto it = _c.begin(); std::advance(it, i);
+                items.push_back(*it);
+            }
+            return std::move(items);
         }
-        return std::move(items);
-    }
-    
-    collection_type&get() { return _c; }
-    
-    void set(const rx_notify_value&x)
-    {
-        _c = x;
-    }
-    
-    void insert(const rx_notify_value&x, const rx_notify_index&indices)
-    {
-        for (difference_type i=0;i<x.size();i++)
+        
+        collection_type&get() { return _c; }
+        
+        void set(const rx_notify_value&x)
         {
-            auto it = _c.begin(); std::advance(it, indices.at(i));
-            _c.insert(it, x.at(i));
+            _c = x;
         }
-    }
-    
-    void insert(const rx_notify_value&x)
-    {
-        _c.insert(_c.end(), x.begin(), x.end());
-    }
-    
-    void remove(const rx_notify_index&indices)
-    {
-        for (auto it_i=indices.crbegin(); it_i!=indices.crend(); it_i++)
+        
+        void insert(const rx_notify_value&x, const rx_notify_index&indices)
         {
-            auto it_x = _c.begin(); std::advance(it_x, *it_i);
-            _c.erase(it_x);
+            for (difference_type i=0;i<x.size();i++)
+            {
+                auto it_i = indices.begin(); std::advance(it_i, i);
+                auto it_x = x.begin(); std::advance(it_x, i);
+                auto it_c = _c.begin(); std::advance(it_c, *it_i);
+                _c.insert(it_c, *it_x);
+            }
         }
-    }
-    
-    void replace(const rx_notify_index&indices, const rx_notify_value&x)
-    {
-        for (auto i=0;i<x.size();i++)
+        
+        void insert(const rx_notify_value&x)
         {
-            auto it = _c.begin(); std::advance(it, indices.at(i));
-            *it = x.at(i);
+            _c.insert(_c.end(), x.begin(), x.end());
         }
-    }
-};
+        
+        void remove(const rx_notify_index&indices)
+        {
+            for (auto it_i=indices.crbegin(); it_i!=indices.crend(); it_i++)
+            {
+                auto it_x = _c.begin(); std::advance(it_x, *it_i);
+                _c.erase(it_x);
+            }
+        }
+        
+        void replace(const rx_notify_index&indices, const rx_notify_value&x)
+        {
+            for (auto i=0;i<x.size();i++)
+            {
+                auto it_i = indices.begin(); std::advance(it_i, i);
+                auto it_x = x.begin(); std::advance(it_x, i);
+                auto it_c = _c.begin(); std::advance(it_c, *it_i);
+                *it_c = *it_x;
+            }
+        }
+    };
+}
+
+template<typename Collection> class operation;
+
+template<typename T> class operation<std::vector<T>> :public detail::worker_with_index<std::vector<T>> { };
+template<typename T> class operation<std::list<T>> :public detail::worker_with_index<std::list<T>> { };
 
 template<typename Collection, typename Operation=operation<Collection>>
 class kvo_collection
