@@ -338,4 +338,71 @@ SCENARIO("test basic kvo_collection operations", "")
             }
         }
     }
+    GIVEN("a kvo_collection with std::set")
+    {
+        typedef std::set<int> collection_t;
+        kvo::collection<collection_t> IDs;
+        int ID_count = 0;
+        THEN("watch IDs' count")
+        {
+            typedef decltype(IDs)::rx_notify_value rx_notify_value;
+            rxcpp::observable<>::empty<rx_notify_value>()
+            .merge(IDs.subject_setting.get_observable(),
+                   IDs.subject_insertion.get_observable(),
+                   IDs.subject_removal.get_observable(),
+                   IDs.subject_replacement.get_observable())
+            .subscribe([&ID_count, &IDs](const rx_notify_value&x){
+                ID_count = IDs().size();
+            });
+            REQUIRE(ID_count == 0);
+            
+            WHEN("set a set of data")
+            {
+                IDs.set({100,200,300,400,500,600,700,800,900});
+                REQUIRE(IDs.get() == collection_t({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(IDs() == collection_t({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(ID_count == 9);
+                
+                IDs.set({100,200,300,400});
+                REQUIRE(IDs.get() == collection_t({100,200,300,400}));
+                REQUIRE(IDs() == collection_t({100,200,300,400}));
+                REQUIRE(ID_count == 4);
+                
+                THEN("insert {99,88}")
+                {
+                    IDs.insert({99, 88});
+                    REQUIRE(IDs() == collection_t({100,99,200,88,300,400}));
+                    REQUIRE(ID_count == 6);
+                }
+                
+                THEN("remove objects {99, 88, 300}")
+                {
+                    IDs.remove({99, 88, 300});
+                    REQUIRE(IDs() == collection_t({100,200,400}));
+                    REQUIRE(ID_count == 3);
+                }
+                
+                THEN("replace objects {200, 400} with {99, 88}")
+                {
+                    IDs.replace({200, 400}, {99, 88});
+                    REQUIRE(IDs() == collection_t({100,99,300,88}));
+                    REQUIRE(ID_count == 4);
+                }
+                
+                THEN("remove all items")
+                {
+                    IDs.set({});
+                    REQUIRE(IDs() == collection_t({}));
+                    REQUIRE(ID_count == 0);
+                }
+                
+                THEN("remove all items")
+                {
+                    IDs.remove_all();
+                    REQUIRE(IDs() == collection_t({}));
+                    REQUIRE(ID_count == 0);
+                }
+            }
+        }
+    }
 }

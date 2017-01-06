@@ -138,15 +138,75 @@ namespace kvo
                 }
             }
         };
+        
+        template<typename Collection>
+        struct worker_without_index;
+        
+        template<typename ...Args, template<typename...> class Container>
+        struct worker_without_index<Container<Args...>>
+        {
+        public:
+            typedef Container<Args...>                          collection_type;
+            typedef typename collection_type::value_type        value_type;
+            typedef Container<value_type>                       rx_notify_value;
+        private:
+            collection_type                                     _c;
+        public:
+            collection_type&get() { return _c; }
+            
+            void set(const rx_notify_value&x)
+            {
+                _c = x;
+            }
+            
+            void insert(const rx_notify_value&x)
+            {
+                _c.insert(x.begin(), x.end());
+            }
+            
+            void remove(const rx_notify_value&values)
+            {
+                for (auto it=values.begin(); it!=values.end(); it++)
+                {
+                    _c.erase(*it);
+                }
+            }
+            
+            void replace(const rx_notify_value&x, const rx_notify_value&y)
+            {
+                remove(x);
+                insert(y);
+            }
+        };
     }
+    
+    template<typename Worker>
+    struct worker_traits
+    {
+        template<typename T>
+        static typename std::enable_if<(sizeof(typename T::rx_notify_index)>0), std::true_type>::type test(int);
+        template<typename T> static std::false_type test(...);
+        typedef decltype(test<Worker>(0)) with_index;
+    };
     
     template<typename Collection> class worker;
     
     template<typename T> class worker<std::vector<T>> :public detail::worker_with_index<std::vector<T>> { };
     template<typename T> class worker<std::list<T>> :public detail::worker_with_index<std::list<T>> { };
     
-    template<typename Collection, typename Worker=worker<Collection>>
-    class collection
+    template<typename T> class worker<std::set<T>> :public detail::worker_without_index<std::set<T>> { };
+    
+    static_assert(worker_traits<worker<std::vector<int>>>::with_index::value, "");
+
+    
+    template<
+    typename Collection,
+    typename Worker=worker<Collection>,
+    typename WithIndex=typename worker_traits<Worker>::with_index>
+    class collection;
+    
+    template<typename Collection, typename Worker>
+    class collection<Collection, Worker, std::true_type>
     {
     public:
         typedef Collection                                  collection_type;
@@ -239,6 +299,81 @@ namespace kvo
                 subject_replacement_will.get_subscriber().on_next(x);
                 this->worker.replace(indices, x);
                 subject_replacement_did.get_subscriber().on_next(x);
+            }
+        }
+    };
+    
+    template<typename Collection, typename Worker>
+    class collection<Collection, Worker, std::false_type>
+    {
+    public:
+        typedef Collection                                  collection_type;
+        typedef Worker                                      worker_type;
+        typedef typename worker_type::rx_notify_value       rx_notify_value;
+    private:
+        worker_type                                         worker;
+    public:
+        rxcpp::subjects::subject<rx_notify_value>           subject_setting_will;
+        rxcpp::subjects::subject<rx_notify_value>           subject_insertion_will;
+        rxcpp::subjects::subject<rx_notify_value>           subject_removal_will;
+        rxcpp::subjects::subject<rx_notify_value>           subject_replacement_will;
+        
+        rxcpp::subjects::subject<rx_notify_value>           subject_setting_did;
+        rxcpp::subjects::subject<rx_notify_value>           subject_insertion_did;
+        rxcpp::subjects::subject<rx_notify_value>           subject_removal_did;
+        rxcpp::subjects::subject<rx_notify_value>           subject_replacement_did;
+        
+        rxcpp::subjects::subject<rx_notify_value>&          subject_setting     = subject_setting_did;
+        rxcpp::subjects::subject<rx_notify_value>&          subject_insertion   = subject_insertion_did;
+        rxcpp::subjects::subject<rx_notify_value>&          subject_removal     = subject_removal_did;
+        rxcpp::subjects::subject<rx_notify_value>&          subject_replacement = subject_replacement_did;
+        
+        collection_type&get() { return this->worker.get(); }
+        
+        collection_type& operator()() { return this->get(); }
+        
+        void set(const rx_notify_value&x)
+        {
+            if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
+            {
+                this->subject_setting_will.get_subscriber().on_next(x);
+                this->worker.set(x);
+                this->subject_setting_did.get_subscriber().on_next(x);
+            }
+        }
+        
+        void insert(const rx_notify_value&x)
+        {
+            if (x.size() > 0)
+            {
+                subject_insertion_will.get_subscriber().on_next(x);
+                this->worker.insert(x);
+                subject_insertion_did.get_subscriber().on_next(x);
+            }
+        }
+        
+        void remove(const rx_notify_value&x)
+        {
+            if (x.size() > 0)
+            {
+                subject_removal_will.get_subscriber().on_next(x);
+                this->worker.remove(x);
+                subject_removal_did.get_subscriber().on_next(x);
+            }
+        }
+        
+        void remove_all()
+        {
+            this->set({});
+        }
+        
+        void replace(const rx_notify_value&x, const rx_notify_value&y)
+        {
+            if (x.size() > 0 || y.size() > 0)
+            {
+                subject_replacement_will.get_subscriber().on_next(x);
+                this->worker.replace(x, y);
+                subject_replacement_did.get_subscriber().on_next(y);
             }
         }
     };
