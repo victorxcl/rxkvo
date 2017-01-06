@@ -195,6 +195,7 @@ namespace kvo
     template<typename T> class worker<std::list<T>> :public detail::worker_with_index<std::list<T>> { };
     
     template<typename T> class worker<std::set<T>> :public detail::worker_without_index<std::set<T>> { };
+    template<typename T> class worker<std::unordered_set<T>> :public detail::worker_without_index<std::unordered_set<T>> { };
     
     static_assert(worker_traits<worker<std::vector<int>>>::with_index::value, "");
 
