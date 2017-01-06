@@ -7,9 +7,9 @@ SCENARIO("test kvo_varibale", "")
 {
     struct Person
     {
-        kvo_variable<std::string> firstName;
-        kvo_variable<std::string> lastName;
-        kvo_variable<std::string> fullName;
+        kvo::variable<std::string> firstName;
+        kvo::variable<std::string> lastName;
+        kvo::variable<std::string> fullName;
         
         Person()
         {
@@ -64,14 +64,14 @@ SCENARIO("test kvo_varibale", "")
     {
         struct Leader
         {
-            kvo_variable<Person> member;
+            kvo::variable<Person> member;
         };
         AND_THEN("given a team with rx key path")
         {
             struct Team
             {
-                kvo_variable<Leader> leader;
-                kvo_variable<std::string> leader_fullName;
+                kvo::variable<Leader> leader;
+                kvo::variable<std::string> leader_fullName;
                 Team()
                 {
                     leader.subject.get_observable()
@@ -117,8 +117,8 @@ SCENARIO("test kvo_varibale", "")
         {
             struct Team
             {
-                kvo_variable<Leader> leader;
-                kvo_variable<std::string> leader_fullName;
+                kvo::variable<Leader> leader;
+                kvo::variable<std::string> leader_fullName;
                 Team()
                 {
                     leader([](const Leader&x){ return x.member.subject.get_observable(); },
@@ -169,7 +169,7 @@ SCENARIO("test basic kvo_collection operations", "")
     GIVEN("a kvo_collection with std::vector")
     {
         typedef std::vector<int> collection_t;
-        kvo_collection<collection_t> IDs;
+        kvo::collection<collection_t> IDs;
         int ID_count = 0;
         THEN("watch IDs' count")
         {
@@ -255,7 +255,7 @@ SCENARIO("test basic kvo_collection operations", "")
     GIVEN("a kvo_collection with std::list")
     {
         typedef std::list<int> collection_t;
-        kvo_collection<collection_t> IDs;
+        kvo::collection<collection_t> IDs;
         int ID_count = 0;
         THEN("watch IDs' count")
         {
