@@ -61,13 +61,12 @@ class operation<std::vector<T>>
 {
 public:
     typedef std::vector<T>                              collection_type;
+    typedef typename collection_type::value_type        value_type;
     typedef typename collection_type::difference_type   difference_type;
-    typedef typename collection_type::const_iterator    const_iterator;
-    typedef typename collection_type::iterator          iterator;
-    typedef std::vector<T>                              rx_notify_value;
+    typedef std::vector<value_type>                     rx_notify_value;
     typedef std::vector<difference_type>                rx_notify_index;
 private:
-    collection_type c;
+    collection_type _c;
 public:
     
     rx_notify_index indices_for_append_items(const rx_notify_value&x)
@@ -75,7 +74,7 @@ public:
         rx_notify_index indices;
         for (difference_type i=0; i<x.size(); i++)
         {
-            indices.push_back(c.size() + i);
+            indices.push_back(_c.size() + i);
         }
         return std::move(indices);
     }
@@ -85,47 +84,47 @@ public:
         rx_notify_value items;
         for (const auto&i:indices)
         {
-            auto it = c.begin(); std::advance(it, i);
+            auto it = _c.begin(); std::advance(it, i);
             items.push_back(*it);
         }
         return std::move(items);
     }
     
-    collection_type&get() { return c; }
+    collection_type&get() { return _c; }
     
     void set(const rx_notify_value&x)
     {
-        c = x;
+        _c = x;
     }
     
     void insert(const rx_notify_value&x, const rx_notify_index&indices)
     {
         for (difference_type i=0;i<x.size();i++)
         {
-            auto it = c.begin(); std::advance(it, indices.at(i));
-            c.insert(it, x.at(i));
+            auto it = _c.begin(); std::advance(it, indices.at(i));
+            _c.insert(it, x.at(i));
         }
     }
     
     void insert(const rx_notify_value&x)
     {
-        c.insert(c.end(), x.begin(), x.end());
+        _c.insert(_c.end(), x.begin(), x.end());
     }
     
     void remove(const rx_notify_index&indices)
     {
         for (auto it_i=indices.crbegin(); it_i!=indices.crend(); it_i++)
         {
-            auto it_x = c.begin(); std::advance(it_x, *it_i);
-            c.erase(it_x);
+            auto it_x = _c.begin(); std::advance(it_x, *it_i);
+            _c.erase(it_x);
         }
     }
     
     void replace(const rx_notify_index&indices, const rx_notify_value&x)
     {
-        for (difference_type i=0;i<x.size();i++)
+        for (auto i=0;i<x.size();i++)
         {
-            auto it = c.begin(); std::advance(it, indices.at(i));
+            auto it = _c.begin(); std::advance(it, indices.at(i));
             *it = x.at(i);
         }
     }
@@ -137,33 +136,29 @@ class kvo_collection
 public:
     typedef Collection                                  collection_type;
     typedef Operation                                   operation_type;
-    typedef typename collection_type::value_type        value_type;
-    typedef typename collection_type::difference_type   difference_type;
-    typedef typename collection_type::const_iterator    const_iterator;
-    typedef typename collection_type::iterator          iterator;
-    typedef std::vector<value_type>                     rx_notify_value;
-    typedef std::vector<difference_type>                rx_notify_index;
+    typedef typename operation_type::rx_notify_value    rx_notify_value;
+    typedef typename operation_type::rx_notify_index    rx_notify_index;
 private:
-    Operation operation;
+    operation_type                                      operation;
 public:
-    rxcpp::subjects::subject<rx_notify_value> subject_setting_will;
-    rxcpp::subjects::subject<rx_notify_value> subject_insertion_will;
-    rxcpp::subjects::subject<rx_notify_value> subject_removal_will;
-    rxcpp::subjects::subject<rx_notify_value> subject_replacement_will;
+    rxcpp::subjects::subject<rx_notify_value>           subject_setting_will;
+    rxcpp::subjects::subject<rx_notify_value>           subject_insertion_will;
+    rxcpp::subjects::subject<rx_notify_value>           subject_removal_will;
+    rxcpp::subjects::subject<rx_notify_value>           subject_replacement_will;
     
-    rxcpp::subjects::subject<rx_notify_value> subject_setting_did;
-    rxcpp::subjects::subject<rx_notify_value> subject_insertion_did;
-    rxcpp::subjects::subject<rx_notify_value> subject_removal_did;
-    rxcpp::subjects::subject<rx_notify_value> subject_replacement_did;
+    rxcpp::subjects::subject<rx_notify_value>           subject_setting_did;
+    rxcpp::subjects::subject<rx_notify_value>           subject_insertion_did;
+    rxcpp::subjects::subject<rx_notify_value>           subject_removal_did;
+    rxcpp::subjects::subject<rx_notify_value>           subject_replacement_did;
     
-    rxcpp::subjects::subject<rx_notify_value>&subject_setting = subject_setting_did;
-    rxcpp::subjects::subject<rx_notify_value>&subject_insertion = subject_insertion_did;
-    rxcpp::subjects::subject<rx_notify_value>&subject_removal = subject_removal_did;
-    rxcpp::subjects::subject<rx_notify_value>&subject_replacement = subject_replacement_did;
+    rxcpp::subjects::subject<rx_notify_value>&          subject_setting = subject_setting_did;
+    rxcpp::subjects::subject<rx_notify_value>&          subject_insertion = subject_insertion_did;
+    rxcpp::subjects::subject<rx_notify_value>&          subject_removal = subject_removal_did;
+    rxcpp::subjects::subject<rx_notify_value>&          subject_replacement = subject_replacement_did;
     
-    rxcpp::subjects::subject<rx_notify_index> subject_insertion_index;
-    rxcpp::subjects::subject<rx_notify_index> subject_removal_index;
-    rxcpp::subjects::subject<rx_notify_index> subject_replacement_index;
+    rxcpp::subjects::subject<rx_notify_index>           subject_insertion_index;
+    rxcpp::subjects::subject<rx_notify_index>           subject_removal_index;
+    rxcpp::subjects::subject<rx_notify_index>           subject_replacement_index;
     
     collection_type&get() { return this->operation.get(); }
     
