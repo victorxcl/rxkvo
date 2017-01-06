@@ -66,8 +66,11 @@ public:
     typedef typename collection_type::iterator          iterator;
     typedef std::vector<T>                              rx_notify_value;
     typedef std::vector<difference_type>                rx_notify_index;
+private:
+    collection_type c;
+public:
     
-    static rx_notify_index indices_for_append_items(collection_type&c, const rx_notify_value&x)
+    rx_notify_index indices_for_append_items(const rx_notify_value&x)
     {
         rx_notify_index indices;
         for (difference_type i=0; i<x.size(); i++)
@@ -77,7 +80,7 @@ public:
         return std::move(indices);
     }
     
-    static rx_notify_value items_at_indices(collection_type&c, const rx_notify_index&indices)
+    rx_notify_value items_at_indices(const rx_notify_index&indices)
     {
         rx_notify_value items;
         for (const auto&i:indices)
@@ -88,11 +91,14 @@ public:
         return std::move(items);
     }
     
-    static void set(collection_type&c, const rx_notify_value&x)
+    collection_type&get() { return c; }
+    
+    void set(const rx_notify_value&x)
     {
         c = x;
     }
-    static void insert(collection_type&c, const rx_notify_value&x, const rx_notify_index&indices)
+    
+    void insert(const rx_notify_value&x, const rx_notify_index&indices)
     {
         for (difference_type i=0;i<x.size();i++)
         {
@@ -101,7 +107,12 @@ public:
         }
     }
     
-    static void remove(collection_type&c, const rx_notify_index&indices)
+    void insert(const rx_notify_value&x)
+    {
+        c.insert(c.end(), x.begin(), x.end());
+    }
+    
+    void remove(const rx_notify_index&indices)
     {
         for (auto it_i=indices.crbegin(); it_i!=indices.crend(); it_i++)
         {
@@ -110,7 +121,7 @@ public:
         }
     }
     
-    static void replace(collection_type&c, const rx_notify_index&indices, const rx_notify_value&x)
+    void replace(const rx_notify_index&indices, const rx_notify_value&x)
     {
         for (difference_type i=0;i<x.size();i++)
         {
@@ -133,7 +144,7 @@ public:
     typedef std::vector<value_type>                     rx_notify_value;
     typedef std::vector<difference_type>                rx_notify_index;
 private:
-    collection_type collection;
+    Operation operation;
 public:
     rxcpp::subjects::subject<rx_notify_value> subject_setting_will;
     rxcpp::subjects::subject<rx_notify_value> subject_insertion_will;
@@ -154,16 +165,16 @@ public:
     rxcpp::subjects::subject<rx_notify_index> subject_removal_index;
     rxcpp::subjects::subject<rx_notify_index> subject_replacement_index;
     
-    collection_type&get() { return this->collection; }
+    collection_type&get() { return this->operation.get(); }
     
     collection_type& operator()() { return this->get(); }
     
     void set(const rx_notify_value&x)
     {
-        if (this->collection.size() > 0 || (this->collection.size() == 0 && x.size() > 0))
+        if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
         {
             this->subject_setting_will.get_subscriber().on_next(x);
-            operation_type::set(this->collection, x);
+            this->operation.set(x);
             this->subject_setting_did.get_subscriber().on_next(x);
         }
     }
@@ -177,7 +188,7 @@ public:
             
             subject_insertion_will.get_subscriber().on_next(x);
             
-            operation_type::insert(this->collection, x, indices);
+            this->operation.insert(x, indices);
             
             subject_insertion_did.get_subscriber().on_next(x);
         }
@@ -187,13 +198,13 @@ public:
     {
         if (x.size() > 0)
         {
-            rx_notify_index indices = operation_type::indices_for_append_items(this->collection, x);
+            rx_notify_index indices = this->operation.indices_for_append_items(x);
             
             subject_insertion_index.get_subscriber().on_next(indices);
             
             subject_insertion_will.get_subscriber().on_next(x);
             
-            this->collection.insert(this->collection.end(), x.begin(), x.end());
+            this->operation.insert(x);
             
             subject_insertion_did.get_subscriber().on_next(x);
         }
@@ -205,11 +216,11 @@ public:
         {
             subject_removal_index.get_subscriber().on_next(indices);
             
-            rx_notify_value items = operation_type::items_at_indices(this->collection, indices);
+            rx_notify_value items = this->operation.items_at_indices(indices);
             
             subject_removal_will.get_subscriber().on_next(items);
             
-            operation_type::remove(this->collection, indices);
+            this->operation.remove(indices);
             
             subject_removal_did.get_subscriber().on_next(items);
         }
@@ -229,7 +240,7 @@ public:
             
             subject_replacement_will.get_subscriber().on_next(x);
             
-            operation_type::replace(this->collection, indices, x);
+            this->operation.replace(indices, x);
             
             subject_replacement_did.get_subscriber().on_next(x);
         }
