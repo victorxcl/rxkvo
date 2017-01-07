@@ -56,13 +56,18 @@ namespace kvo
     
     namespace detail
     {
+        struct worker_as_array_tag {};
+        struct worker_as_set_tag {};
+        struct worker_as_map_tag {};
+        
         template<typename Collection>
-        struct worker_with_index;
+        struct worker_as_array;
         
         template<typename ...Args, template<typename...> class Container>
-        struct worker_with_index<Container<Args...>>
+        struct worker_as_array<Container<Args...>>
         {
         public:
+            typedef worker_as_array_tag                         tag;
             typedef Container<Args...>                          collection_type;
             typedef typename collection_type::value_type        value_type;
             typedef typename collection_type::difference_type   difference_type;
@@ -97,7 +102,7 @@ namespace kvo
             
             collection_type&get() { return _c; }
             
-            void set(const rx_notify_value&x)
+            void set(const collection_type&x)
             {
                 _c = x;
             }
@@ -140,12 +145,13 @@ namespace kvo
         };
         
         template<typename Collection>
-        struct worker_without_index;
+        struct worker_as_set;
         
         template<typename ...Args, template<typename...> class Container>
-        struct worker_without_index<Container<Args...>>
+        struct worker_as_set<Container<Args...>>
         {
         public:
+            typedef worker_as_set_tag                           tag;
             typedef Container<Args...>                          collection_type;
             typedef typename collection_type::value_type        value_type;
             typedef Container<value_type>                       rx_notify_value;
@@ -178,36 +184,94 @@ namespace kvo
                 insert(y);
             }
         };
+        
+        
+        template<typename Collection, typename RxIndexContainer>
+        struct worker_as_map;
+        
+        template<
+        typename ...Args, template<typename...> class Container,
+        typename ...Item, template<typename...> class RxContainer
+        >
+        struct worker_as_map<Container<Args...>, RxContainer<Item...>>
+        {
+        public:
+            typedef worker_as_map_tag                           tag;
+            typedef Container<Args...>                          collection_type;
+            typedef typename collection_type::key_type          index_type;
+            typedef typename collection_type::value_type        value_type;
+            typedef typename collection_type::difference_type   difference_type;
+            typedef collection_type                             rx_notify_value;
+            typedef RxContainer<index_type>                     rx_notify_index;
+            typedef typename collection_type::iterator          iterator;
+            typedef typename collection_type::const_iterator    const_iterator;
+        private:
+            collection_type                                     _c;
+        public:
+            
+            rx_notify_value items_at_indices(const rx_notify_index&indices)
+            {
+                rx_notify_value items;
+                for (const auto&i:indices)
+                {
+                    auto it_c = _c.find(i);
+                    if (_c.end() != it_c)
+                        items.insert(*it_c);
+                }
+                return std::move(items);
+            }
+            
+            collection_type&get() { return _c; }
+            
+            void set(const collection_type&x)
+            {
+                _c = x;
+            }
+            
+            void insert(const collection_type&x)
+            {
+                _c.insert(x.begin(), x.end());
+            }
+            
+            void remove(const rx_notify_index&indices)
+            {
+                for (auto it_i=indices.begin(); it_i!=indices.end(); it_i++)
+                {
+                    _c.erase(*it_i);
+                }
+            }
+            
+            void replace(const collection_type&x)
+            {
+                for (auto it=x.begin(); it!=x.end(); it++)
+                {
+                    auto it_c = _c.find(it->first);
+                    if (it_c != _c.end())
+                        it_c->second = it->second;
+                }
+            }
+        };
     }
-    
-    template<typename Worker>
-    struct worker_traits
-    {
-        template<typename T>
-        static typename std::enable_if<(sizeof(typename T::rx_notify_index)>0), std::true_type>::type test(int);
-        template<typename T> static std::false_type test(...);
-        typedef decltype(test<Worker>(0)) with_index;
-    };
     
     template<typename Collection> class worker;
     
-    template<typename T> class worker<std::vector<T>> :public detail::worker_with_index<std::vector<T>> { };
-    template<typename T> class worker<std::list<T>> :public detail::worker_with_index<std::list<T>> { };
+    template<typename T> class worker<std::vector<T>> :public detail::worker_as_array<std::vector<T>> { };
+    template<typename T> class worker<std::list<T>> :public detail::worker_as_array<std::list<T>> { };
     
-    template<typename T> class worker<std::set<T>> :public detail::worker_without_index<std::set<T>> { };
-    template<typename T> class worker<std::unordered_set<T>> :public detail::worker_without_index<std::unordered_set<T>> { };
+    template<typename T> class worker<std::set<T>> :public detail::worker_as_set<std::set<T>> { };
+    template<typename T> class worker<std::unordered_set<T>> :public detail::worker_as_set<std::unordered_set<T>> { };
     
-    static_assert(worker_traits<worker<std::vector<int>>>::with_index::value, "");
-
+    template<typename K,typename V> class worker<std::map<K,V>> :public detail::worker_as_map<std::map<K,V>,std::set<K>> { };
     
     template<
     typename Collection,
     typename Worker=worker<Collection>,
-    typename WithIndex=typename worker_traits<Worker>::with_index>
+    typename Tag=typename Worker::tag
+    >
     class collection;
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, std::true_type>
+    class collection<Collection, Worker, detail::worker_as_array_tag>
     {
     public:
         typedef Collection                                  collection_type;
@@ -240,7 +304,7 @@ namespace kvo
         
         collection_type& operator()() { return this->get(); }
         
-        void set(const rx_notify_value&x)
+        void set(const collection_type&x)
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
             {
@@ -305,7 +369,7 @@ namespace kvo
     };
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, std::false_type>
+    class collection<Collection, Worker, detail::worker_as_set_tag>
     {
     public:
         typedef Collection                                  collection_type;
@@ -375,6 +439,83 @@ namespace kvo
                 subject_replacement_will.get_subscriber().on_next(x);
                 this->worker.replace(x, y);
                 subject_replacement_did.get_subscriber().on_next(y);
+            }
+        }
+    };
+    
+    template<typename Collection, typename Worker>
+    class collection<Collection, Worker, detail::worker_as_map_tag>
+    {
+    public:
+        typedef Collection                                  collection_type;
+        typedef Worker                                      worker_type;
+        typedef typename worker_type::rx_notify_value       rx_notify_value;
+        typedef typename worker_type::rx_notify_index       rx_notify_index;
+    private:
+        worker_type                                         worker;
+    public:
+        rxcpp::subjects::subject<rx_notify_value>           subject_setting_will;
+        rxcpp::subjects::subject<rx_notify_value>           subject_insertion_will;
+        rxcpp::subjects::subject<rx_notify_value>           subject_removal_will;
+        rxcpp::subjects::subject<rx_notify_value>           subject_replacement_will;
+        
+        rxcpp::subjects::subject<rx_notify_value>           subject_setting_did;
+        rxcpp::subjects::subject<rx_notify_value>           subject_insertion_did;
+        rxcpp::subjects::subject<rx_notify_value>           subject_removal_did;
+        rxcpp::subjects::subject<rx_notify_value>           subject_replacement_did;
+        
+        rxcpp::subjects::subject<rx_notify_value>&          subject_setting     = subject_setting_did;
+        rxcpp::subjects::subject<rx_notify_value>&          subject_insertion   = subject_insertion_did;
+        rxcpp::subjects::subject<rx_notify_value>&          subject_removal     = subject_removal_did;
+        rxcpp::subjects::subject<rx_notify_value>&          subject_replacement = subject_replacement_did;
+        
+        collection_type&get() { return this->worker.get(); }
+        
+        collection_type& operator()() { return this->get(); }
+        
+        void set(const collection_type&x)
+        {
+            if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
+            {
+                this->subject_setting_will.get_subscriber().on_next(x);
+                this->worker.set(x);
+                this->subject_setting_did.get_subscriber().on_next(x);
+            }
+        }
+        
+        void insert(const collection_type&x)
+        {
+            if (x.size() > 0)
+            {
+                subject_insertion_will.get_subscriber().on_next(x);
+                this->worker.insert(x);
+                subject_insertion_did.get_subscriber().on_next(x);
+            }
+        }
+        
+        void remove(const rx_notify_index&indices)
+        {
+            if (indices.size() > 0)
+            {
+                rx_notify_value items = this->worker.items_at_indices(indices);
+                subject_removal_will.get_subscriber().on_next(items);
+                this->worker.remove(indices);
+                subject_removal_did.get_subscriber().on_next(items);
+            }
+        }
+        
+        void remove_all()
+        {
+            this->set({});
+        }
+        
+        void replace(const collection_type&x)
+        {
+            if (x.size() > 0)
+            {
+                subject_replacement_will.get_subscriber().on_next(x);
+                this->worker.replace(x);
+                subject_replacement_did.get_subscriber().on_next(x);
             }
         }
     };
