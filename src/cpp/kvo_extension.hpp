@@ -185,7 +185,6 @@ namespace kvo
             }
         };
         
-        
         template<typename Collection, typename RxIndexContainer>
         struct worker_as_map;
         
@@ -261,7 +260,8 @@ namespace kvo
     template<typename T> class worker<std::set<T>> :public detail::worker_as_set<std::set<T>> { };
     template<typename T> class worker<std::unordered_set<T>> :public detail::worker_as_set<std::unordered_set<T>> { };
     
-    template<typename K,typename V> class worker<std::map<K,V>> :public detail::worker_as_map<std::map<K,V>,std::set<K>> { };
+    template<typename K,typename V> class worker<std::map<K,V>> :public detail::worker_as_map<std::map<K,V>,std::unordered_set<K>> { };
+    template<typename K,typename V> class worker<std::unordered_map<K,V>> :public detail::worker_as_map<std::unordered_map<K,V>,std::unordered_set<K>> { };
     
     template<
     typename Collection,
