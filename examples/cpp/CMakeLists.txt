@@ -18,4 +18,4 @@ set (CMAKE_CXX_STANDARD 11)
 
 set(RX_KVO_HEADERS "${PROJECT_SOURCE_DIR}/../../src/cpp/kvo_extension.hpp")
 
-add_executable(RxKVO-test ${RX_KVO_HEADERS} test.cpp)
+add_executable(RxKVO-test ${RX_KVO_HEADERS} test_basic.cpp test_wechat.cpp)
