@@ -7,91 +7,94 @@
 
 namespace wechat{
     
-    enum Gender { Unknown, Male, Female };
-    
-    class User
+    namespace model
     {
-        kvo::variable<std::string> name;
-    };
-    
-    class HumanUser:public User
-    {
-        kvo::variable<int> age;
-        kvo::variable<Gender> gender;
-    };
-    
-    class PublicUser:public User
-    {
+        enum Gender { Unknown, Male, Female };
         
-    };
-    
-    class SelfUser:public HumanUser
-    {
+        class User
+        {
+            kvo::variable<std::string> name;
+        };
         
-    };
-    
-    class Message
-    {
-        kvo::variable<std::string> content;
-        kvo::variable<bool> isReaded;
-        kvo::variable<std::shared_ptr<User>> fromUser;
-    };
-    
-    class Chat
-    {
-        kvo::collection<std::vector<std::shared_ptr<Message>>> messages;
-    };
-    
-    class ToOneChat:public Chat
-    {
-        kvo::variable<std::shared_ptr<SelfUser>> selfUser;
-        kvo::variable<std::shared_ptr<User>> withUser;
-    };
-    
-    class GroupChat:public Chat
-    {
-        kvo::variable<std::shared_ptr<SelfUser>> selfUser;
-        kvo::collection<std::set<std::shared_ptr<User>>> users;
-    };
-    
-    class WeChatModel
-    {
-        kvo::collection<std::set<std::shared_ptr<User>>> users;     // without order
-        kvo::collection<std::vector<std::shared_ptr<Chat>>> chats;  // with order
-    };
-    
-    class ChatViewModel
-    {
-        kvo::variable<std::shared_ptr<Chat>> model;
-        kvo::variable<int> unreadCount;
-    };
-    
-    class ToOneChatViewModel:public ChatViewModel
-    {
+        class HumanUser:public User
+        {
+            kvo::variable<int> age;
+            kvo::variable<Gender> gender;
+        };
         
-    };
-    
-    class GroupChatViewModel:public ChatViewModel
-    {
+        class PublicUser:public User
+        {
+            
+        };
         
-    };
+        class SelfUser:public HumanUser
+        {
+            
+        };
+        
+        class Message
+        {
+            kvo::variable<std::string> content;
+            kvo::variable<bool> isReaded;
+            kvo::variable<std::shared_ptr<User>> fromUser;
+        };
+        
+        class Chat
+        {
+            kvo::collection<std::vector<std::shared_ptr<Message>>> messages;
+        };
+        
+        class ToOneChat:public Chat
+        {
+            kvo::variable<std::shared_ptr<SelfUser>> selfUser;
+            kvo::variable<std::shared_ptr<User>> withUser;
+        };
+        
+        class GroupChat:public Chat
+        {
+            kvo::variable<std::shared_ptr<SelfUser>> selfUser;
+            kvo::collection<std::set<std::shared_ptr<User>>> users;
+        };
+        
+        class WeChat
+        {
+            kvo::collection<std::set<std::shared_ptr<User>>> users;     // without order
+            kvo::collection<std::vector<std::shared_ptr<Chat>>> chats;  // with order
+        };
+    }
     
-    class WeChatViewModel
+    namespace viewmodel
     {
-        kvo::collection<std::vector<std::shared_ptr<ChatViewModel>>> chatViewModel;
-        kvo::variable<int> unreadCount;
-        kvo::variable<int> iconCount;
-    };
-    
-    class WeChatApp
-    {
-        kvo::variable<std::shared_ptr<WeChatModel>> model;
-        kvo::variable<std::shared_ptr<WeChatViewModel>> viewModel;
-        kvo::variable<std::shared_ptr<SelfUser>> selfUser;
-    };
+        class Register
+        {
+            
+        };
+        class Chat
+        {
+            kvo::variable<std::shared_ptr<Chat>> model;
+            kvo::variable<int> unreadCount;
+        };
+        
+        class ToOneChat:public Chat
+        {
+            
+        };
+        
+        class GroupChat:public Chat
+        {
+            
+        };
+        
+        class WeChat
+        {
+            kvo::variable<std::shared_ptr<model::WeChat>> model;
+            kvo::variable<int> unreadCount;
+            kvo::variable<int> iconCount;
+        };
+    }
 }
 
 SCENARIO("test long key path", "")
 {
-    wechat::WeChatApp wechat;
+    wechat::viewmodel::WeChat A, B, C;
 }
