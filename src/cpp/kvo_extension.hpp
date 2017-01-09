@@ -54,7 +54,7 @@ namespace kvo
         }
     };
     
-    namespace detail
+    namespace workers
     {
         struct worker_as_array_tag {};
         struct worker_as_set_tag {};
@@ -254,14 +254,14 @@ namespace kvo
     
     template<typename Collection> class worker;
     
-    template<typename T> class worker<std::vector<T>> :public detail::worker_as_array<std::vector<T>> { };
-    template<typename T> class worker<std::list<T>> :public detail::worker_as_array<std::list<T>> { };
+    template<typename T> class worker<std::vector<T>> :public workers::worker_as_array<std::vector<T>> { };
+    template<typename T> class worker<std::list<T>> :public workers::worker_as_array<std::list<T>> { };
     
-    template<typename T> class worker<std::set<T>> :public detail::worker_as_set<std::set<T>> { };
-    template<typename T> class worker<std::unordered_set<T>> :public detail::worker_as_set<std::unordered_set<T>> { };
+    template<typename T> class worker<std::set<T>> :public workers::worker_as_set<std::set<T>> { };
+    template<typename T> class worker<std::unordered_set<T>> :public workers::worker_as_set<std::unordered_set<T>> { };
     
-    template<typename K,typename V> class worker<std::map<K,V>> :public detail::worker_as_map<std::map<K,V>,std::unordered_set<K>> { };
-    template<typename K,typename V> class worker<std::unordered_map<K,V>> :public detail::worker_as_map<std::unordered_map<K,V>,std::unordered_set<K>> { };
+    template<typename K,typename V> class worker<std::map<K,V>> :public workers::worker_as_map<std::map<K,V>,std::unordered_set<K>> { };
+    template<typename K,typename V> class worker<std::unordered_map<K,V>> :public workers::worker_as_map<std::unordered_map<K,V>,std::unordered_set<K>> { };
     
     template<
     typename Collection,
@@ -271,7 +271,7 @@ namespace kvo
     class collection;
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, detail::worker_as_array_tag>
+    class collection<Collection, Worker, workers::worker_as_array_tag>
     {
     public:
         typedef Collection                                  collection_type;
@@ -369,7 +369,7 @@ namespace kvo
     };
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, detail::worker_as_set_tag>
+    class collection<Collection, Worker, workers::worker_as_set_tag>
     {
     public:
         typedef Collection                                  collection_type;
@@ -444,7 +444,7 @@ namespace kvo
     };
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, detail::worker_as_map_tag>
+    class collection<Collection, Worker, workers::worker_as_map_tag>
     {
     public:
         typedef Collection                                  collection_type;
