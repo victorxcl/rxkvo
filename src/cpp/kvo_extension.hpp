@@ -1,6 +1,6 @@
 namespace kvo
 {
-    namespace detail
+    namespace __keypath__
     {
         template<typename Observable>
         auto switch_map(Observable o)->Observable
@@ -18,6 +18,13 @@ namespace kvo
         {
             return switch_map(o.map([f](typename Observable::value_type&x){ return f(x); }).switch_on_next(), fn ...);
         }
+    }
+    
+    template<typename Observable, typename F, typename ... FN>
+    auto keypath(Observable&&o, F&&f, FN&&... fn)
+    ->decltype(__keypath__::switch_map(std::forward<Observable>(o), std::forward<F>(f), std::forward<FN>(fn)...))
+    {
+        return __keypath__::switch_map(std::forward<Observable>(o), std::forward<F>(f), std::forward<FN>(fn)...);
     }
     
     
@@ -47,10 +54,10 @@ namespace kvo
         }
         
         template<typename F, typename ... FN>
-        auto operator()(F f, FN ... fn)
-        ->decltype(detail::switch_map(this->subject.get_observable(), f, fn ...))
+        auto operator()(F&&f, FN&&... fn)
+        ->decltype(keypath(this->subject.get_observable(), f, fn ...))
         {
-            return detail::switch_map(this->subject.get_observable(), f, fn ...);
+            return keypath(this->subject.get_observable(), f, fn ...);
         }
     };
     
