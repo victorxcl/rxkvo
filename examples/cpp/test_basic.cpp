@@ -643,7 +643,7 @@ SCENARIO("test long key path", "")
         struct Test
         {
             kvo::variable<std::shared_ptr<School>> school;
-            kvo::variable<std::string> best_class_student_name;
+            kvo::variable<std::string> best_class_monitor_name;
             Test(){
                 school = std::make_shared<School>();
                 
@@ -652,24 +652,24 @@ SCENARIO("test long key path", "")
                 .map([](std::shared_ptr<Class>x){ return x->monitor.subject.get_observable(); }).switch_on_next()
                 .map([](std::shared_ptr<Student>x){ return x->name.subject.get_observable(); }).switch_on_next()
                 .subscribe([this](const std::string&x){
-                    this->best_class_student_name = x;
+                    this->best_class_monitor_name = x;
                 });
             }
         };
         
-        Test test;
-        REQUIRE(test.best_class_student_name() == "default name");
+        auto test = std::make_shared<Test>();
+        REQUIRE(test->best_class_monitor_name() == "default name");
         WHEN("modify name")
         {
-            test.school()->best()->monitor()->name = "Hello";
-            REQUIRE(test.best_class_student_name() == "Hello");
+            test->school()->best()->monitor()->name = "Hello";
+            REQUIRE(test->best_class_monitor_name() == "Hello");
         }
         WHEN("modify student")
         {
             auto student = std::make_shared<Student>("World");
             student->name = "World";
-            test.school()->best()->monitor = student;
-            REQUIRE(test.best_class_student_name() == "World");
+            test->school()->best()->monitor = student;
+            REQUIRE(test->best_class_monitor_name() == "World");
         }
         WHEN("modify best class")
         {
@@ -679,8 +679,8 @@ SCENARIO("test long key path", "")
                 student->name = "World";
                 best->monitor = student;
             }
-            test.school()->best = best;
-            REQUIRE(test.best_class_student_name() == "World");
+            test->school()->best = best;
+            REQUIRE(test->best_class_monitor_name() == "World");
         }
         WHEN("modify school")
         {
@@ -692,8 +692,8 @@ SCENARIO("test long key path", "")
                 best->monitor = student;
                 school->best = best;
             }
-            test.school = school;
-            REQUIRE(test.best_class_student_name() == "World");
+            test->school = school;
+            REQUIRE(test->best_class_monitor_name() == "World");
         }
     }
 }
