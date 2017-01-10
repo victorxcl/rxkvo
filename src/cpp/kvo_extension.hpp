@@ -34,6 +34,7 @@ namespace kvo
         typedef variable<T> self_t;
     public:
         rxcpp::subjects::behavior<T> subject = rxcpp::subjects::behavior<T>(T());
+        
         void set(const T&x)
         {
             this->subject.get_subscriber().on_next(x);
