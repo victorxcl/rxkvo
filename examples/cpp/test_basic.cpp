@@ -612,3 +612,88 @@ SCENARIO("test basic kvo_collection operations", "")
         }
     }
 }
+
+SCENARIO("test long key path", "")
+{
+    GIVEN("a simple key path")
+    {
+        struct Student
+        {
+            kvo::variable<std::string> name;
+            Student():Student("default name"){ }
+            Student(const std::string&name){
+                this->name = name;
+            }
+        };
+        struct Class
+        {
+            kvo::variable<std::shared_ptr<Student>> monitor;
+            Class(){
+                monitor = std::make_shared<Student>();
+            }
+        };
+        struct School
+        {
+            kvo::variable<std::shared_ptr<Class>> best;
+            School(){
+                best = std::make_shared<Class>();
+            }
+        };
+        
+        struct Test
+        {
+            kvo::variable<std::shared_ptr<School>> school;
+            kvo::variable<std::string> best_class_student_name;
+            Test(){
+                school = std::make_shared<School>();
+                
+                this->school.subject.get_observable()
+                .map([](std::shared_ptr<School>x){ return x->best.subject.get_observable(); }).switch_on_next()
+                .map([](std::shared_ptr<Class>x){ return x->monitor.subject.get_observable(); }).switch_on_next()
+                .map([](std::shared_ptr<Student>x){ return x->name.subject.get_observable(); }).switch_on_next()
+                .subscribe([this](const std::string&x){
+                    this->best_class_student_name = x;
+                });
+            }
+        };
+        
+        Test test;
+        REQUIRE(test.best_class_student_name() == "default name");
+        WHEN("modify name")
+        {
+            test.school()->best()->monitor()->name = "Hello";
+            REQUIRE(test.best_class_student_name() == "Hello");
+        }
+        WHEN("modify student")
+        {
+            auto student = std::make_shared<Student>("World");
+            student->name = "World";
+            test.school()->best()->monitor = student;
+            REQUIRE(test.best_class_student_name() == "World");
+        }
+        WHEN("modify best class")
+        {
+            auto best = std::make_shared<Class>();
+            {
+                auto student = std::make_shared<Student>("World");
+                student->name = "World";
+                best->monitor = student;
+            }
+            test.school()->best = best;
+            REQUIRE(test.best_class_student_name() == "World");
+        }
+        WHEN("modify school")
+        {
+            auto school = std::make_shared<School>();
+            {
+                auto best = std::make_shared<Class>();
+                auto student = std::make_shared<Student>("World");
+                student->name = "World";
+                best->monitor = student;
+                school->best = best;
+            }
+            test.school = school;
+            REQUIRE(test.best_class_student_name() == "World");
+        }
+    }
+}
