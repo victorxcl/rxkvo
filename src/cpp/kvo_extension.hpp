@@ -67,19 +67,22 @@ namespace kvo
         struct worker_as_set_tag {};
         struct worker_as_map_tag {};
         
-        template<typename Collection>
+        template<typename Collection, typename RxContainer=Collection>
         struct worker_as_array;
         
-        template<typename ...Args, template<typename...> class Container>
-        struct worker_as_array<Container<Args...>>
+        template<
+        typename ...Args, template<typename...> class Container,
+        typename ...Item, template<typename...> class RxContainer
+        >
+        struct worker_as_array<Container<Args...>, RxContainer<Item...>>
         {
         public:
             typedef worker_as_array_tag                         tag;
             typedef Container<Args...>                          collection_type;
             typedef typename collection_type::value_type        value_type;
             typedef typename collection_type::difference_type   difference_type;
-            typedef Container<value_type>                       rx_notify_value;
-            typedef Container<difference_type>                  rx_notify_index;
+            typedef RxContainer<value_type>                     rx_notify_value;
+            typedef RxContainer<difference_type>                rx_notify_index;
             typedef typename collection_type::iterator          iterator;
             typedef typename collection_type::const_iterator    const_iterator;
         private:
@@ -151,33 +154,36 @@ namespace kvo
             }
         };
         
-        template<typename Collection>
+        template<typename Collection, typename RxContainer=Collection>
         struct worker_as_set;
         
-        template<typename ...Args, template<typename...> class Container>
-        struct worker_as_set<Container<Args...>>
+        template<
+        typename ...Args, template<typename...> class Container,
+        typename ...Item, template<typename...> class RxContainer
+        >
+        struct worker_as_set<Container<Args...>, RxContainer<Item...>>
         {
         public:
             typedef worker_as_set_tag                           tag;
             typedef Container<Args...>                          collection_type;
             typedef typename collection_type::value_type        value_type;
-            typedef Container<value_type>                       rx_notify_value;
+            typedef RxContainer<value_type>                     rx_notify_value;
         private:
             collection_type                                     _c;
         public:
             collection_type&get() { return _c; }
             
-            void set(const rx_notify_value&x)
+            void set(const collection_type&x)
             {
                 _c = x;
             }
             
-            void insert(const rx_notify_value&x)
+            void insert(const collection_type&x)
             {
                 _c.insert(x.begin(), x.end());
             }
             
-            void remove(const rx_notify_value&values)
+            void remove(const collection_type&values)
             {
                 for (auto it=values.begin(); it!=values.end(); it++)
                 {
@@ -185,14 +191,14 @@ namespace kvo
                 }
             }
             
-            void replace(const rx_notify_value&x, const rx_notify_value&y)
+            void replace(const collection_type&x, const collection_type&y)
             {
                 remove(x);
                 insert(y);
             }
         };
         
-        template<typename Collection, typename RxIndexContainer>
+        template<typename Collection, typename RxContainer>
         struct worker_as_map;
         
         template<
@@ -259,7 +265,7 @@ namespace kvo
         };
     }
     
-    template<typename Collection> class worker;
+    template<typename Collection, typename RxContainer=Collection> class worker;
     
     template<typename T> class worker<std::vector<T>> :public workers::worker_as_array<std::vector<T>> { };
     template<typename T> class worker<std::list<T>> :public workers::worker_as_array<std::list<T>> { };
