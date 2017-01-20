@@ -76,9 +76,9 @@ namespace kvo
     
     namespace workers
     {
-        struct worker_as_array_tag {};
-        struct worker_as_set_tag {};
-        struct worker_as_map_tag {};
+        struct tag_worker_as_array {};
+        struct tag_worker_as_set   {};
+        struct tag_worker_as_map   {};
         
         template<typename Collection, typename RxContainer=Collection>
         struct worker_as_array;
@@ -90,7 +90,7 @@ namespace kvo
         struct worker_as_array<Container<Args...>, RxContainer<Item...>>
         {
         public:
-            typedef worker_as_array_tag                         tag;
+            typedef tag_worker_as_array                         worker_tag;
             typedef Container<Args...>                          collection_type;
             typedef typename collection_type::value_type        value_type;
             typedef typename collection_type::difference_type   difference_type;
@@ -177,7 +177,7 @@ namespace kvo
         struct worker_as_set<Container<Args...>, RxContainer<Item...>>
         {
         public:
-            typedef worker_as_set_tag                           tag;
+            typedef tag_worker_as_set                           worker_tag;
             typedef Container<Args...>                          collection_type;
             typedef typename collection_type::value_type        value_type;
             typedef RxContainer<value_type>                     rx_notify_value;
@@ -221,7 +221,7 @@ namespace kvo
         struct worker_as_map<Container<Args...>, RxContainer<Item...>>
         {
         public:
-            typedef worker_as_map_tag                           tag;
+            typedef tag_worker_as_map                           worker_tag;
             typedef Container<Args...>                          collection_type;
             typedef typename collection_type::key_type          index_type;
             typedef typename collection_type::value_type        value_type;
@@ -292,12 +292,12 @@ namespace kvo
     template<
     typename Collection,
     typename Worker=worker<Collection>,
-    typename Tag=typename Worker::tag
+    typename Tag=typename Worker::worker_tag
     >
     class collection;
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, workers::worker_as_array_tag>
+    class collection<Collection, Worker, workers::tag_worker_as_array>
     {
     public:
         typedef Collection                                  collection_type;
@@ -398,7 +398,7 @@ namespace kvo
     };
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, workers::worker_as_set_tag>
+    class collection<Collection, Worker, workers::tag_worker_as_set>
     {
     public:
         typedef Collection                                  collection_type;
@@ -473,7 +473,7 @@ namespace kvo
     };
     
     template<typename Collection, typename Worker>
-    class collection<Collection, Worker, workers::worker_as_map_tag>
+    class collection<Collection, Worker, workers::tag_worker_as_map>
     {
     public:
         typedef Collection                                  collection_type;
