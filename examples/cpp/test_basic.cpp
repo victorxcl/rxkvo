@@ -659,41 +659,84 @@ SCENARIO("test long key path", "")
         
         auto test = std::make_shared<Test>();
         REQUIRE(test->best_class_monitor_name() == "default name");
-        WHEN("modify name")
+        
+        THEN("test keypath with operator ()")
         {
-            test->school()->best()->monitor()->name = "Hello";
-            REQUIRE(test->best_class_monitor_name() == "Hello");
-        }
-        WHEN("modify student")
-        {
-            auto student = std::make_shared<Student>("World");
-            student->name = "World";
-            test->school()->best()->monitor = student;
-            REQUIRE(test->best_class_monitor_name() == "World");
-        }
-        WHEN("modify best class")
-        {
-            auto best = std::make_shared<Class>();
+            WHEN("modify name")
+            {
+                test->school()->best()->monitor()->name = "Hello";
+                REQUIRE(test->best_class_monitor_name() == "Hello");
+            }
+            WHEN("modify student")
             {
                 auto student = std::make_shared<Student>("World");
                 student->name = "World";
-                best->monitor = student;
+                test->school()->best()->monitor = student;
+                REQUIRE(test->best_class_monitor_name() == "World");
             }
-            test->school()->best = best;
-            REQUIRE(test->best_class_monitor_name() == "World");
-        }
-        WHEN("modify school")
-        {
-            auto school = std::make_shared<School>();
+            WHEN("modify best class")
             {
                 auto best = std::make_shared<Class>();
+                {
+                    auto student = std::make_shared<Student>("World");
+                    student->name = "World";
+                    best->monitor = student;
+                }
+                test->school()->best = best;
+                REQUIRE(test->best_class_monitor_name() == "World");
+            }
+            WHEN("modify school")
+            {
+                auto school = std::make_shared<School>();
+                {
+                    auto best = std::make_shared<Class>();
+                    auto student = std::make_shared<Student>("World");
+                    student->name = "World";
+                    best->monitor = student;
+                    school->best = best;
+                }
+                test->school = school;
+                REQUIRE(test->best_class_monitor_name() == "World");
+            }
+        }
+        THEN("test keypath with operator ->")
+        {
+            WHEN("modify name")
+            {
+                test->school->best->monitor->name = "Hello";
+                REQUIRE(test->best_class_monitor_name() == "Hello");
+            }
+            WHEN("modify student")
+            {
                 auto student = std::make_shared<Student>("World");
                 student->name = "World";
-                best->monitor = student;
-                school->best = best;
+                test->school->best->monitor = student;
+                REQUIRE(test->best_class_monitor_name() == "World");
             }
-            test->school = school;
-            REQUIRE(test->best_class_monitor_name() == "World");
+            WHEN("modify best class")
+            {
+                auto best = std::make_shared<Class>();
+                {
+                    auto student = std::make_shared<Student>("World");
+                    student->name = "World";
+                    best->monitor = student;
+                }
+                test->school->best = best;
+                REQUIRE(test->best_class_monitor_name() == "World");
+            }
+            WHEN("modify school")
+            {
+                auto school = std::make_shared<School>();
+                {
+                    auto best = std::make_shared<Class>();
+                    auto student = std::make_shared<Student>("World");
+                    student->name = "World";
+                    best->monitor = student;
+                    school->best = best;
+                }
+                test->school = school;
+                REQUIRE(test->best_class_monitor_name() == "World");
+            }
         }
     }
 }
