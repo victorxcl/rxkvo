@@ -666,6 +666,7 @@ SCENARIO("test long key path", "")
             {
                 test->school()->best()->monitor()->name = "Hello";
                 REQUIRE(test->best_class_monitor_name() == "Hello");
+                REQUIRE(*test->best_class_monitor_name == "Hello");
             }
             WHEN("modify student")
             {
@@ -673,6 +674,7 @@ SCENARIO("test long key path", "")
                 student->name = "World";
                 test->school()->best()->monitor = student;
                 REQUIRE(test->best_class_monitor_name() == "World");
+                REQUIRE(*test->best_class_monitor_name == "World");
             }
             WHEN("modify best class")
             {
@@ -684,6 +686,7 @@ SCENARIO("test long key path", "")
                 }
                 test->school()->best = best;
                 REQUIRE(test->best_class_monitor_name() == "World");
+                REQUIRE(*test->best_class_monitor_name == "World");
             }
             WHEN("modify school")
             {
@@ -697,6 +700,7 @@ SCENARIO("test long key path", "")
                 }
                 test->school = school;
                 REQUIRE(test->best_class_monitor_name() == "World");
+                REQUIRE(*test->best_class_monitor_name == "World");
             }
         }
         THEN("test keypath with operator ->")
@@ -705,6 +709,7 @@ SCENARIO("test long key path", "")
             {
                 test->school->best->monitor->name = "Hello";
                 REQUIRE(test->best_class_monitor_name() == "Hello");
+                REQUIRE(*test->best_class_monitor_name == "Hello");
             }
             WHEN("modify student")
             {
@@ -712,6 +717,7 @@ SCENARIO("test long key path", "")
                 student->name = "World";
                 test->school->best->monitor = student;
                 REQUIRE(test->best_class_monitor_name() == "World");
+                REQUIRE(*test->best_class_monitor_name == "World");
             }
             WHEN("modify best class")
             {
@@ -723,6 +729,7 @@ SCENARIO("test long key path", "")
                 }
                 test->school->best = best;
                 REQUIRE(test->best_class_monitor_name() == "World");
+                REQUIRE(*test->best_class_monitor_name == "World");
             }
             WHEN("modify school")
             {
@@ -736,6 +743,7 @@ SCENARIO("test long key path", "")
                 }
                 test->school = school;
                 REQUIRE(test->best_class_monitor_name() == "World");
+                REQUIRE(*test->best_class_monitor_name == "World");
             }
         }
     }

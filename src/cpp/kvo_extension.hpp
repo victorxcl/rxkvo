@@ -47,6 +47,10 @@ namespace kvo
         {
             return this->subject.get_value();
         }
+        T operator * ()
+        {
+            return this->subject.get_value();
+        }
         self_t&operator = (const T&x)
         {
             set(x);
