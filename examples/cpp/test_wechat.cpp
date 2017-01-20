@@ -329,10 +329,10 @@ SCENARIO("test Register", "")
             wechat::viewmodel::Register vm_Register;
             vm_Register.server = server;
             
-            vm_Register.model = A->selfUser();
-            REQUIRE(vm_Register.textBox_account() == "");
-            REQUIRE(vm_Register.textBox_password() == "");
-            REQUIRE(vm_Register.buttonRegister_enabled() == false);
+            vm_Register.model = A->selfUser;
+            REQUIRE(*vm_Register.textBox_account == "");
+            REQUIRE(*vm_Register.textBox_password == "");
+            REQUIRE(*vm_Register.buttonRegister_enabled == false);
             
             THEN("test the enabled status of button register")
             {
@@ -342,12 +342,12 @@ SCENARIO("test Register", "")
                     GIVEN("password with word")
                     {
                         vm_Register.textBox_password = "word";
-                        REQUIRE(vm_Register.buttonRegister_enabled() == false);
+                        REQUIRE(*vm_Register.buttonRegister_enabled == false);
                     }
                     GIVEN("password with wordword")
                     {
                         vm_Register.textBox_password = "worldword";
-                        REQUIRE(vm_Register.buttonRegister_enabled() == false);
+                        REQUIRE(*vm_Register.buttonRegister_enabled == false);
                     }
                 }
                 GIVEN("account with hellohello")
@@ -356,12 +356,12 @@ SCENARIO("test Register", "")
                     GIVEN("password with word")
                     {
                         vm_Register.textBox_password = "world";
-                        REQUIRE(vm_Register.buttonRegister_enabled() == false);
+                        REQUIRE(*vm_Register.buttonRegister_enabled == false);
                     }
                     GIVEN("password with wordword")
                     {
                         vm_Register.textBox_password = "worldworld";
-                        REQUIRE(vm_Register.buttonRegister_enabled() == true);
+                        REQUIRE(*vm_Register.buttonRegister_enabled == true);
                     }
                 }
             }
@@ -383,7 +383,7 @@ SCENARIO("test Register", "")
                     vm_Register.textBox_account = "pandaxcl@gmail.com"; // length >= 8
                     vm_Register.textBox_password = "123456";            // length >= 6
                     
-                    REQUIRE(vm_Register.buttonRegister_enabled() == true);
+                    REQUIRE(*vm_Register.buttonRegister_enabled == true);
                     
                     THEN("click button register")
                     {
@@ -391,9 +391,9 @@ SCENARIO("test Register", "")
                         std::this_thread::sleep_for(std::chrono::seconds(1));
                         REQUIRE(server->users.size() == 1);
                         auto user = vm_Register.model();
-                        REQUIRE(user->userID() != 0);
-                        REQUIRE(user->account() == "pandaxcl@gmail.com");
-                        REQUIRE(user->password() == "123456");
+                        REQUIRE(*user->userID != 0);
+                        REQUIRE(*user->account == "pandaxcl@gmail.com");
+                        REQUIRE(*user->password == "123456");
                     }
                 }
             }
@@ -415,31 +415,31 @@ SCENARIO("test conversation", "")
         {
             {
                 auto chat = std::make_shared<wechat::model::Chat>();
-                chat->selfUser = vm_A->model()->selfUser();
-                chat->withUser = vm_B->model()->selfUser();
-                vm_A->model()->addChat(chat);
+                chat->selfUser = vm_A->model->selfUser;
+                chat->withUser = vm_B->model->selfUser;
+                vm_A->model->addChat(chat);
             }
             {
                 auto chat = std::make_shared<wechat::model::Chat>();
-                chat->selfUser = vm_B->model()->selfUser();
-                chat->withUser = vm_A->model()->selfUser();
-                vm_B->model()->addChat(chat);
+                chat->selfUser = vm_B->model->selfUser;
+                chat->withUser = vm_A->model->selfUser;
+                vm_B->model->addChat(chat);
             }
             WHEN("A send a message to B")
             {
                 {
                     auto vm = std::make_shared<wechat::viewmodel::Chat>();
-                    vm->model = vm_A->model()->chats().front();
-                    REQUIRE(vm->unreadCount() == 0);
+                    vm->model = vm_A->model->chats->front();
+                    REQUIRE(*vm->unreadCount == 0);
                     vm->send("Hello");
-                    REQUIRE(vm->unreadCount() == 1);
+                    REQUIRE(*vm->unreadCount == 1);
                 }
                 {
                     auto vm = std::make_shared<wechat::viewmodel::Chat>();
-                    vm->model = vm_B->model()->chats().front();
-                    REQUIRE(vm->unreadCount() == 0);
+                    vm->model = vm_B->model->chats->front();
+                    REQUIRE(*vm->unreadCount == 0);
                     vm->recv("Hello");
-                    REQUIRE(vm->unreadCount() == 1);
+                    REQUIRE(*vm->unreadCount == 1);
                 }
 //                REQUIRE(vm_A->iconCount() == 1);
 //                REQUIRE(vm_B->iconCount() == 1);

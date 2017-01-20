@@ -39,15 +39,19 @@ namespace kvo
         {
             this->subject.get_subscriber().on_next(x);
         }
-        T get()const
+        T get() const
         {
             return this->subject.get_value();
         }
-        T operator -> ()
+        T operator -> () const
         {
             return this->subject.get_value();
         }
-        T operator * ()
+        T operator * () const
+        {
+            return this->subject.get_value();
+        }
+        operator T () const
         {
             return this->subject.get_value();
         }
@@ -325,6 +329,9 @@ namespace kvo
         collection_type&get() { return this->worker.get(); }
         
         collection_type& operator()() { return this->get(); }
+        
+        collection_type* operator -> () { return &this->get(); }
+        collection_type& operator * () { return this->get(); }
         
         void set(const collection_type&x)
         {
