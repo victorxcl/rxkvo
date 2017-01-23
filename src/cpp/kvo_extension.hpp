@@ -333,6 +333,14 @@ namespace kvo
         collection_type* operator -> () { return &this->get(); }
         collection_type& operator * () { return this->get(); }
         
+        template<typename C>
+        std::enable_if_t<!std::is_same<C,collection_type>()> set(C&&c)
+        {
+            collection_type x;
+            std::copy(std::begin(c), std::end(c), std::inserter(x, std::end(x)));
+            this->set(std::forward<collection_type>(x));
+        }
+        
         void set(const collection_type&x)
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))

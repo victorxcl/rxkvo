@@ -189,7 +189,7 @@ SCENARIO("test basic kvo_collection operations", "")
             });
             REQUIRE(ID_count == 0);
             
-            WHEN("set a list of data")
+            WHEN("set with std::vector container type")
             {
                 IDs.set({100,200,300,400,500,600,700,800,900});
                 REQUIRE(IDs.get() == collection_t({100,200,300,400,500,600,700,800,900}));
@@ -254,6 +254,31 @@ SCENARIO("test basic kvo_collection operations", "")
                     REQUIRE(IDs() == collection_t({}));
                     REQUIRE(ID_count == 0);
                 }
+            }
+            WHEN("set with std::list container type")
+            {
+                IDs.set(std::list<int>{100,200,300,400,500,600,700,800,900});
+                REQUIRE(IDs.get() == collection_t({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(IDs() == collection_t({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(ID_count == 9);
+                
+                IDs.set(std::list<int>{100,200,300,400});
+                REQUIRE(IDs.get() == collection_t({100,200,300,400}));
+                REQUIRE(IDs() == collection_t({100,200,300,400}));
+                REQUIRE(ID_count == 4);
+            }
+            
+            WHEN("set with std::set container type")
+            {
+                IDs.set(std::set<int>{100,200,300,400,500,600,700,800,900});
+                REQUIRE(IDs.get() == collection_t({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(IDs() == collection_t({100,200,300,400,500,600,700,800,900}));
+                REQUIRE(ID_count == 9);
+                
+                IDs.set(std::set<int>{100,200,300,400});
+                REQUIRE(IDs.get() == collection_t({100,200,300,400}));
+                REQUIRE(IDs() == collection_t({100,200,300,400}));
+                REQUIRE(ID_count == 4);
             }
         }
     }
