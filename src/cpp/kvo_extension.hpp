@@ -301,6 +301,14 @@ namespace kvo
             std::copy(std::begin(c), std::end(c), std::inserter(x, std::end(x)));
             static_cast<KVOCollectionType*>(this)->set(std::forward<collection_type>(x));
         }
+        
+        template<typename C>
+        std::enable_if_t<!std::is_same<C,collection_type>()> insert(C&&c)
+        {
+            collection_type x;
+            std::copy(std::begin(c), std::end(c), std::inserter(x, std::end(x)));
+            static_cast<KVOCollectionType*>(this)->insert(std::forward<collection_type>(x));
+        }
     };
     
     template<
@@ -350,6 +358,9 @@ namespace kvo
         collection_type& operator * () { return this->get(); }
         
         using collection_base<self_type, Collection>::set;
+        using collection_base<self_type, Collection>::insert;
+        
+        
         void set(const collection_type&x)
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
@@ -445,7 +456,12 @@ namespace kvo
         
         collection_type& operator()() { return this->get(); }
         
+        collection_type* operator -> () { return &this->get(); }
+        collection_type& operator * () { return this->get(); }
+        
         using collection_base<self_type, Collection>::set;
+        using collection_base<self_type, Collection>::insert;
+        
         void set(const rx_notify_value&x)
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
@@ -494,8 +510,10 @@ namespace kvo
     
     template<typename Collection, typename Worker>
     class collection<Collection, Worker, workers::tag_worker_as_map>
+    : public collection_base<collection<Collection, Worker, workers::tag_worker_as_map>, Collection>
     {
     public:
+        typedef collection                                  self_type;
         typedef Collection                                  collection_type;
         typedef Worker                                      worker_type;
         typedef typename worker_type::rx_notify_value       rx_notify_value;
@@ -521,6 +539,12 @@ namespace kvo
         collection_type&get() { return this->worker.get(); }
         
         collection_type& operator()() { return this->get(); }
+        
+        collection_type* operator -> () { return &this->get(); }
+        collection_type& operator * () { return this->get(); }
+        
+        using collection_base<self_type, Collection>::set;
+        using collection_base<self_type, Collection>::insert;
         
         void set(const collection_type&x)
         {

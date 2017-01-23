@@ -724,7 +724,7 @@ SCENARIO("test basic kvo_collection operations", "")
             });
             REQUIRE(ID_count == 0);
             
-            WHEN("set a set of data")
+            WHEN("set with std::map container type")
             {
                 IDs.set({{"a",100},{"b",200},{"c",300},{"d",400},{"e",500},{"f",600},{"g",700},{"h",800},{"i",900}});
                 REQUIRE(IDs.get() == collection_t({{"a",100},{"b",200},{"c",300},{"d",400},{"e",500},{"f",600},{"g",700},{"h",800},{"i",900}}));
@@ -771,6 +771,32 @@ SCENARIO("test basic kvo_collection operations", "")
                     REQUIRE(ID_count == 0);
                 }
             }
+            
+            WHEN("set with std::unordered_map container type")
+            {
+                IDs.set(std::unordered_map<std::string,int>{{"a",100},{"b",200},{"c",300},{"d",400},{"e",500},{"f",600},{"g",700},{"h",800},{"i",900}});
+                
+                REQUIRE(IDs->at("a") == 100);
+                REQUIRE(IDs->at("b") == 200);
+                REQUIRE(IDs->at("c") == 300);
+                REQUIRE(IDs->at("d") == 400);
+                REQUIRE(IDs->at("e") == 500);
+                REQUIRE(IDs->at("f") == 600);
+                REQUIRE(IDs->at("g") == 700);
+                REQUIRE(IDs->at("h") == 800);
+                REQUIRE(IDs->at("i") == 900);
+                REQUIRE(IDs->find("j") == IDs->end());
+                REQUIRE(ID_count == 9);
+                
+                IDs.set(std::unordered_map<std::string,int>{{"a",100},{"b",200},{"c",300},{"d",400}});
+                REQUIRE(IDs->at("a") == 100);
+                REQUIRE(IDs->at("b") == 200);
+                REQUIRE(IDs->at("c") == 300);
+                REQUIRE(IDs->at("d") == 400);
+                REQUIRE(IDs->find("e") == IDs->end());
+                
+                REQUIRE(ID_count == 4);
+            }
         }
     }
     GIVEN("a kvo_collection with std::unordered_map")
@@ -791,7 +817,7 @@ SCENARIO("test basic kvo_collection operations", "")
             });
             REQUIRE(ID_count == 0);
             
-            WHEN("set a set of data")
+            WHEN("set with std::unordered_map container type")
             {
                 IDs.set({{"a",100},{"b",200},{"c",300},{"d",400},{"e",500},{"f",600},{"g",700},{"h",800},{"i",900}});
                 REQUIRE(IDs.get() == collection_t({{"a",100},{"b",200},{"c",300},{"d",400},{"e",500},{"f",600},{"g",700},{"h",800},{"i",900}}));
@@ -837,6 +863,32 @@ SCENARIO("test basic kvo_collection operations", "")
                     REQUIRE(IDs() == collection_t({}));
                     REQUIRE(ID_count == 0);
                 }
+            }
+            
+            WHEN("set with std::map container type")
+            {
+                IDs.set(std::map<std::string,int>{{"a",100},{"b",200},{"c",300},{"d",400},{"e",500},{"f",600},{"g",700},{"h",800},{"i",900}});
+                
+                REQUIRE(IDs->at("a") == 100);
+                REQUIRE(IDs->at("b") == 200);
+                REQUIRE(IDs->at("c") == 300);
+                REQUIRE(IDs->at("d") == 400);
+                REQUIRE(IDs->at("e") == 500);
+                REQUIRE(IDs->at("f") == 600);
+                REQUIRE(IDs->at("g") == 700);
+                REQUIRE(IDs->at("h") == 800);
+                REQUIRE(IDs->at("i") == 900);
+                REQUIRE(IDs->find("j") == IDs->end());
+                REQUIRE(ID_count == 9);
+                
+                IDs.set(std::map<std::string,int>{{"a",100},{"b",200},{"c",300},{"d",400}});
+                REQUIRE(IDs->at("a") == 100);
+                REQUIRE(IDs->at("b") == 200);
+                REQUIRE(IDs->at("c") == 300);
+                REQUIRE(IDs->at("d") == 400);
+                REQUIRE(IDs->find("e") == IDs->end());
+                
+                REQUIRE(ID_count == 4);
             }
         }
     }
