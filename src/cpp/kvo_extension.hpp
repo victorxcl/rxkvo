@@ -289,6 +289,20 @@ namespace kvo
     template<typename K,typename V> class worker<std::map<K,V>> :public workers::worker_as_map<std::map<K,V>,std::unordered_set<K>> { };
     template<typename K,typename V> class worker<std::unordered_map<K,V>> :public workers::worker_as_map<std::unordered_map<K,V>,std::unordered_set<K>> { };
     
+    
+    template<typename KVOCollectionType, typename CollectionType>
+    struct collection_base
+    {
+        typedef CollectionType                      collection_type;
+        template<typename C>
+        std::enable_if_t<!std::is_same<C,collection_type>()> set(C&&c)
+        {
+            collection_type x;
+            std::copy(std::begin(c), std::end(c), std::inserter(x, std::end(x)));
+            static_cast<KVOCollectionType*>(this)->set(std::forward<collection_type>(x));
+        }
+    };
+    
     template<
     typename Collection,
     typename Worker=worker<Collection>,
@@ -298,8 +312,10 @@ namespace kvo
     
     template<typename Collection, typename Worker>
     class collection<Collection, Worker, workers::tag_worker_as_array>
+    : public collection_base<collection<Collection, Worker, workers::tag_worker_as_array>, Collection>
     {
     public:
+        typedef collection                                  self_type;
         typedef Collection                                  collection_type;
         typedef Worker                                      worker_type;
         typedef typename worker_type::rx_notify_value       rx_notify_value;
@@ -333,14 +349,7 @@ namespace kvo
         collection_type* operator -> () { return &this->get(); }
         collection_type& operator * () { return this->get(); }
         
-        template<typename C>
-        std::enable_if_t<!std::is_same<C,collection_type>()> set(C&&c)
-        {
-            collection_type x;
-            std::copy(std::begin(c), std::end(c), std::inserter(x, std::end(x)));
-            this->set(std::forward<collection_type>(x));
-        }
-        
+        using collection_base<self_type, Collection>::set;
         void set(const collection_type&x)
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
@@ -407,8 +416,10 @@ namespace kvo
     
     template<typename Collection, typename Worker>
     class collection<Collection, Worker, workers::tag_worker_as_set>
+    : public collection_base<collection<Collection, Worker, workers::tag_worker_as_set>, Collection>
     {
     public:
+        typedef collection                                  self_type;
         typedef Collection                                  collection_type;
         typedef Worker                                      worker_type;
         typedef typename worker_type::rx_notify_value       rx_notify_value;
@@ -434,6 +445,7 @@ namespace kvo
         
         collection_type& operator()() { return this->get(); }
         
+        using collection_base<self_type, Collection>::set;
         void set(const rx_notify_value&x)
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
