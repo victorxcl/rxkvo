@@ -894,6 +894,28 @@ SCENARIO("test basic kvo_collection operations", "")
     }
 }
 
+SCENARIO("test exteneded kvo_collection operation", "")
+{
+    struct Student
+    {
+        kvo::variable<std::string> name;
+    };
+    struct Class
+    {
+        kvo::collection<std::shared_ptr<Student>> students;
+    };
+    
+    struct Grade
+    {
+        kvo::collection<std::shared_ptr<Class>> classes;
+    };
+    
+    GIVEN("a kvo_collection with std::vector")
+    {
+        
+    }
+}
+
 SCENARIO("test long key path", "")
 {
     GIVEN("a simple key path")
