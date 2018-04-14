@@ -896,24 +896,65 @@ SCENARIO("test basic kvo_collection operations", "")
 
 SCENARIO("test exteneded kvo_collection operation", "")
 {
-    struct Student
+    struct Number
     {
-        kvo::variable<std::string> name;
-    };
-    struct Class
-    {
-        kvo::collection<std::shared_ptr<Student>> students;
+        Number(int v){ value.set(v); }
+        kvo::variable<int> value;
     };
     
-    struct Grade
+    GIVEN("three numbers: a, b, c")
     {
-        kvo::collection<std::shared_ptr<Class>> classes;
-    };
-    
-    GIVEN("a kvo_collection with std::vector")
-    {
+        auto a = std::make_shared<Number>(1);
+        auto b = std::make_shared<Number>(2);
+        auto c = std::make_shared<Number>(3);
         
+        REQUIRE(a->value.get() == 1);
+        REQUIRE(b->value.get() == 2);
+        REQUIRE(c->value.get() == 3);
+        
+        REQUIRE(a->value() == 1);
+        REQUIRE(b->value() == 2);
+        REQUIRE(c->value() == 3);
+        
+        GIVEN("a kvo_collection with std::vector")
+        {
+            typedef std::vector<std::shared_ptr<Number>> Collection;
+            kvo::collection<Collection> summer;
+            int theSum = 0;
+            
+            typedef decltype(summer)::rx_notify_value rx_notify_value;
+            rxcpp::observable<>::empty<rx_notify_value>()
+            .merge(summer.subject_setting.get_observable(),
+                   summer.subject_insertion.get_observable(),
+                   summer.subject_removal.get_observable(),
+                   summer.subject_replacement.get_observable())
+            .subscribe([&theSum, &summer](const rx_notify_value&x){
+                theSum = 0; for (auto&&ptr:summer()) theSum += ptr->value();
+            });
+            
+            WHEN("set with these three numbers to summer")
+            {
+                REQUIRE(0 == theSum);
+                summer.set({a,b,c});
+                REQUIRE(1+2+3 == theSum);
+                
+                THEN("remove a from the summer")
+                {
+                    summer.remove({0});
+                    REQUIRE(2+3 == theSum);
+                    AND_THEN("modify a to a new value")
+                    {
+                        a->value.set(100);
+                        REQUIRE(100 == a->value());
+                        REQUIRE(2+3 == theSum);
+                    }
+                }
+            }
+            
+        }
     }
+    
+    
 }
 
 SCENARIO("test long key path", "")
