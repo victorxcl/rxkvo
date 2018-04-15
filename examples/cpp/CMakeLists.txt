@@ -11,7 +11,7 @@ IF(WIN32)
 ENDIF(WIN32)
 
 include_directories("${PROJECT_SOURCE_DIR}/../../lib3rd/rxcpp.git/Rx/v2/src")
-include_directories("${PROJECT_SOURCE_DIR}/../../lib3rd/catch.git/include")
+include_directories("${PROJECT_SOURCE_DIR}/../../lib3rd/catch.git/single_include")
 include_directories("${PROJECT_SOURCE_DIR}/../../src/cpp")
 
 set (CMAKE_CXX_STANDARD 14)
