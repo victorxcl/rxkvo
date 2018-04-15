@@ -894,7 +894,7 @@ SCENARIO("test basic kvo_collection operations", "")
     }
 }
 
-SCENARIO("test exteneded kvo_collection operation", "")
+SCENARIO("test exteneded kvo_collection operation", "[kvo::collection with kvo::variable]")
 {
     struct Number
     {
@@ -918,35 +918,82 @@ SCENARIO("test exteneded kvo_collection operation", "")
         
         GIVEN("a kvo_collection with std::vector")
         {
-            typedef std::vector<std::shared_ptr<Number>> Collection;
-            kvo::collection<Collection> summer;
-            int theSum = 0;
-            
-            typedef decltype(summer)::rx_notify_value rx_notify_value;
-            rxcpp::observable<>::empty<rx_notify_value>()
-            .merge(summer.subject_setting.get_observable(),
-                   summer.subject_insertion.get_observable(),
-                   summer.subject_removal.get_observable(),
-                   summer.subject_replacement.get_observable())
-            .subscribe([&theSum, &summer](const rx_notify_value&x){
-                theSum = 0; for (auto&&ptr:summer()) theSum += ptr->value();
-            });
-            
-            WHEN("set with these three numbers to summer")
+            typedef std::vector<std::shared_ptr<Number>> Numbers;
+            struct Accum
             {
-                REQUIRE(0 == theSum);
-                summer.set({a,b,c});
-                REQUIRE(1+2+3 == theSum);
-                
-                THEN("remove a from the summer")
+//                rxcpp::subscription subscription;
+                kvo::collection<Numbers> kvo_numbers;
+                int theSum {0};
+                void compute()
                 {
-                    summer.remove({0});
-                    REQUIRE(2+3 == theSum);
+                    this->theSum = 0;
+                    for (auto&&ptr:this->kvo_numbers())
+                        this->theSum += ptr->value();
+                }
+            };
+            auto accum = std::make_shared<Accum>();
+            typedef decltype(accum->kvo_numbers)::rx_notify_value rx_notify_value;
+
+            rxcpp::observable<>::empty<rx_notify_value>()
+            .merge(accum->kvo_numbers.subject_setting.get_observable(),
+                   accum->kvo_numbers.subject_insertion.get_observable(),
+                   accum->kvo_numbers.subject_removal.get_observable(),
+                   accum->kvo_numbers.subject_replacement.get_observable())
+            .flat_map([accum](auto){ return rxcpp::observable<>::iterate(accum->kvo_numbers()); }, [](auto, auto y){ return y; })
+            .flat_map([](auto x){ return x->value.subject.get_observable(); }, [](auto, auto y){ return y; })
+            .subscribe([accum](auto){ accum->compute(); });
+            
+//            rxcpp::observable<>::empty<rx_notify_value>()
+//            .merge(accum->kvo_numbers.subject_setting.get_observable(),
+//                   accum->kvo_numbers.subject_insertion.get_observable(),
+//                   accum->kvo_numbers.subject_removal.get_observable(),
+//                   accum->kvo_numbers.subject_replacement.get_observable())
+//            .subscribe([accum](const rx_notify_value&x){
+//                accum->subscription.unsubscribe();// must unsubscribe the last subscription.
+//                accum->subscription = rxcpp::observable<>::iterate(accum->kvo_numbers())
+//                .flat_map([](auto x){ return x->value.subject.get_observable(); }, [](auto x, auto y){ return y; })
+//                .subscribe([accum](auto x){ accum->compute(); });
+//            });
+            
+            WHEN("set with these three numbers to accum")
+            {
+                REQUIRE(0 == accum->theSum);
+                accum->kvo_numbers.set({a,b,c});
+                REQUIRE(1+2+3 == accum->theSum);
+                
+                THEN("remove a from the accum")
+                {
+                    accum->kvo_numbers.remove({0});
+                    REQUIRE(2+3 == accum->theSum);
                     AND_THEN("modify a to a new value")
                     {
                         a->value.set(100);
                         REQUIRE(100 == a->value());
-                        REQUIRE(2+3 == theSum);
+                        REQUIRE(2+3 == accum->theSum);
+                        
+                        AND_THEN("modify b to a new value")
+                        {
+                            b->value.set(100);
+                            REQUIRE(100 == b->value());
+                            REQUIRE(100+3 == accum->theSum);
+                            AND_THEN("modify c to a new value")
+                            {
+                                c->value.set(100);
+                                REQUIRE(100 == c->value());
+                                REQUIRE(100+100 == accum->theSum);
+                            }
+                        }
+                    }
+                }
+                THEN("remove b from the summer")
+                {
+                    accum->kvo_numbers.remove({1});
+                    REQUIRE(1+3 == accum->theSum);
+                    AND_THEN("modify a to a new value")
+                    {
+                        b->value.set(100);
+                        REQUIRE(100 == b->value());
+                        REQUIRE(1+3 == accum->theSum);
                     }
                 }
             }
