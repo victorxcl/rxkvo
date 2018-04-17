@@ -934,30 +934,27 @@ SCENARIO("test exteneded kvo_collection operation", "[kvo::collection with kvo::
                 }
             };
             auto accum = std::make_shared<Accum>();
-            typedef decltype(accum->kvo_numbers)::rx_notify_value rx_notify_value;
 
             WHEN("in use case most simple")
             {
-#if 0 // wrong
-                rxcpp::observable<>::empty<rx_notify_value>()
-                .merge(accum->kvo_numbers.subject_setting.get_observable(),
-                       accum->kvo_numbers.subject_insertion.get_observable(),
-                       accum->kvo_numbers.subject_removal.get_observable(),
-                       accum->kvo_numbers.subject_replacement.get_observable())
+#if 0           // wrong case
+                rxcpp::observable<>::from(accum->kvo_numbers.subject_setting.get_observable(),
+                                          accum->kvo_numbers.subject_insertion.get_observable(),
+                                          accum->kvo_numbers.subject_removal.get_observable(),
+                                          accum->kvo_numbers.subject_replacement.get_observable()).merge()
                 .flat_map([accum](auto){ return rxcpp::observable<>::iterate(accum->kvo_numbers()); }, [](auto, auto y){ return y; })
                 .flat_map([](auto x){ return x->value.subject.get_observable(); }, [](auto, auto y){ return y; })
                 .subscribe([accum](auto){ accum->compute(); });
-#else// correct
-                rxcpp::observable<>::empty<rx_notify_value>()
-                .merge(accum->kvo_numbers.subject_setting.get_observable(),
-                       accum->kvo_numbers.subject_insertion.get_observable(),
-                       accum->kvo_numbers.subject_removal.get_observable(),
-                       accum->kvo_numbers.subject_replacement.get_observable())
+#else           // correct case
+                rxcpp::observable<>::from(accum->kvo_numbers.subject_setting.get_observable(),
+                                          accum->kvo_numbers.subject_insertion.get_observable(),
+                                          accum->kvo_numbers.subject_removal.get_observable(),
+                                          accum->kvo_numbers.subject_replacement.get_observable()).merge()
                 .tap([accum](auto){ accum->subscription.unsubscribe(); /* must unsubscribe the last subscription. */ })
-                .subscribe([accum](const rx_notify_value&x){
+                .subscribe([accum](auto&&x){
                     accum->subscription = rxcpp::observable<>::iterate(accum->kvo_numbers())
-                    .flat_map([](auto x){ return x->value.subject.get_observable(); }, [](auto x, auto y){ return y; })
-                    .subscribe([accum](auto x){ accum->compute(); });
+                    .flat_map([](auto&&x){ return x->value.subject.get_observable(); }, [](auto x, auto y){ return y; })
+                    .subscribe([accum](auto&&x){ accum->compute(); });
                 });
 #endif
                 
