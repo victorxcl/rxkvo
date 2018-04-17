@@ -418,7 +418,7 @@ namespace kvo
             if (x.size() > 0 && indices.size() > 0 && x.size() == indices.size())
             {
                 subject_replacement_index.get_subscriber().on_next(indices);
-                subject_replacement_will.get_subscriber().on_next(x);
+                subject_replacement_will.get_subscriber().on_next(this->worker.items_at_indices(indices));
                 this->worker.replace(indices, x);
                 subject_replacement_did.get_subscriber().on_next(x);
             }
