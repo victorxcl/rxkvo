@@ -264,7 +264,7 @@ namespace kvo
                 return std::move(items);
             }
             
-            rx_notify_index indices_for_map(const collection_type&x)
+            static rx_notify_index indices_for_map(const collection_type&x)
             {
                 rx_notify_index indices;
                 for (auto&o:x)
@@ -273,7 +273,7 @@ namespace kvo
                 }
                 return indices;
             }
-            rx_notify_value values_for_map(const collection_type&x)
+            static rx_notify_value values_for_map(const collection_type&x)
             {
                 rx_notify_value values;
                 for (auto&o:x)
@@ -601,7 +601,7 @@ namespace kvo
         {
             if (x.size() > 0)
             {
-                subject_insertion_index.get_subscriber().on_next(this->worker.indices_for_map(x));
+                subject_insertion_index.get_subscriber().on_next(worker_type::indices_for_map(x));
                 subject_insertion_will.get_subscriber().on_next(x);
                 this->worker.insert(x);
                 subject_insertion_did.get_subscriber().on_next(x);
@@ -629,8 +629,8 @@ namespace kvo
         {
             if (x.size() > 0)
             {
-                subject_replacement_index.get_subscriber().on_next(this->worker.indices_for_map(x));
-                subject_replacement_will.get_subscriber().on_next(this->worker.items_at_indices(this->worker.indices_for_map(x)));
+                subject_replacement_index.get_subscriber().on_next(worker_type::indices_for_map(x));
+                subject_replacement_will.get_subscriber().on_next(this->worker.items_at_indices(worker_type::indices_for_map(x)));
                 this->worker.replace(x);
                 subject_replacement_did.get_subscriber().on_next(x);
             }
