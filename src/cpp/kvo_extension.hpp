@@ -117,7 +117,7 @@ namespace kvo
                 rx_notify_value items;
                 for (const auto&i:indices)
                 {
-                    auto it = _c.begin(); std::advance(it, i);
+                    auto it = std::next(_c.begin(), i);
                     items.push_back(*it);
                 }
                 return std::move(items);
@@ -134,9 +134,9 @@ namespace kvo
             {
                 for (std::size_t i=0;i<x.size();i++)
                 {
-                    auto it_i = indices.begin(); std::advance(it_i, i);
-                    auto it_x = x.begin(); std::advance(it_x, i);
-                    auto it_c = _c.begin(); std::advance(it_c, *it_i);
+                    auto it_i = std::next(indices.begin(), i);
+                    auto it_x = std::next(x.begin(), i);
+                    auto it_c = std::next(_c.begin(), *it_i);
                     _c.insert(it_c, *it_x);
                 }
             }
@@ -150,7 +150,7 @@ namespace kvo
             {
                 for (auto it_i=indices.crbegin(); it_i!=indices.crend(); it_i++)
                 {
-                    auto it_x = _c.begin(); std::advance(it_x, *it_i);
+                    auto it_x = std::next(_c.begin(), *it_i);
                     _c.erase(it_x);
                 }
             }
@@ -159,9 +159,9 @@ namespace kvo
             {
                 for (auto i=0;i<x.size();i++)
                 {
-                    auto it_i = indices.begin(); std::advance(it_i, i);
-                    auto it_x = x.begin(); std::advance(it_x, i);
-                    auto it_c = _c.begin(); std::advance(it_c, *it_i);
+                    auto it_i = std::next(indices.begin(), i);
+                    auto it_x = std::next(x.begin(), i);
+                    auto it_c = std::next(_c.begin(), *it_i);
                     *it_c = *it_x;
                 }
             }
