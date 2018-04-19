@@ -17,6 +17,7 @@ SCENARIO("kvo::variable' [will] and [did] subjects", "")
         {
             Test()
             {
+                REQUIRE(sizeof(A) < 64);
                 A.subject_will.get_observable().subscribe([this](int x){ this->A_will = x; });
                 A.subject_did.get_observable().subscribe([this](int x){ this->A_did = x; });
             }
@@ -61,6 +62,7 @@ SCENARIO("kvo::variable' [will] and [did] subjects", "")
         {
             Test()
             {
+                REQUIRE(sizeof(A) < 64);
                 A.subject_will.get_observable().subscribe([this](std::string x){ this->A_will = x; });
                 A.subject_did.get_observable().subscribe([this](std::string x){ this->A_did = x; });
             }
@@ -110,6 +112,7 @@ SCENARIO("kvo::collection<std::vector<T>> test [will] and [did] subjects", "")
         {
             Test()
             {
+                REQUIRE(sizeof(C) < 256);
                 C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
                 C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
                 
@@ -218,6 +221,7 @@ SCENARIO("kvo::collection<std::list<T>> test [will] and [did] subjects", "")
         {
             Test()
             {
+                REQUIRE(sizeof(C) < 256);
                 C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
                 C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
                 
@@ -325,6 +329,7 @@ SCENARIO("kvo::collection<std::set<T>> test [will] and [did] subjects", "")
         {
             Test()
             {
+                REQUIRE(sizeof(C) < 256);
                 C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
                 C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
                 
@@ -425,6 +430,7 @@ SCENARIO("kvo::collection<std::unordered_set<T>> test [will] and [did] subjects"
         {
             Test()
             {
+                REQUIRE(sizeof(C) < 256);
                 C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
                 C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
                 
@@ -527,6 +533,7 @@ SCENARIO("kvo::collection<std::map<T>> test [will] and [did] subjects", "")
         {
             Test()
             {
+                REQUIRE(sizeof(C) < 256);
                 C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
                 C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
                 
@@ -638,6 +645,7 @@ SCENARIO("kvo::collection<std::unordered_map<T>> test [will] and [did] subjects"
         {
             Test()
             {
+                REQUIRE(sizeof(C) < 256);
                 C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
                 C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
                 
