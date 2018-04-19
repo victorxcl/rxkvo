@@ -264,6 +264,25 @@ namespace kvo
                 return std::move(items);
             }
             
+            rx_notify_index indices_for_map(const collection_type&x)
+            {
+                rx_notify_index indices;
+                for (auto&o:x)
+                {
+                    indices.insert(std::get<0>(o));
+                }
+                return indices;
+            }
+            rx_notify_value values_for_map(const collection_type&x)
+            {
+                rx_notify_value values;
+                for (auto&o:x)
+                {
+                    values.insert(std::get<1>(o));
+                }
+                return values;
+            }
+            
             collection_type&get() { return _c; }
             
             void set(const collection_type&x)
@@ -554,6 +573,10 @@ namespace kvo
         rxcpp::subjects::subject<rx_notify_value>&          subject_removal     = subject_removal_did;
         rxcpp::subjects::subject<rx_notify_value>&          subject_replacement = subject_replacement_did;
         
+        rxcpp::subjects::subject<rx_notify_index>           subject_insertion_index;
+        rxcpp::subjects::subject<rx_notify_index>           subject_removal_index;
+        rxcpp::subjects::subject<rx_notify_index>           subject_replacement_index;
+        
         collection_type&get() { return this->worker.get(); }
         
         collection_type& operator()() { return this->get(); }
@@ -568,7 +591,7 @@ namespace kvo
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
             {
-                this->subject_setting_will.get_subscriber().on_next(x);
+                this->subject_setting_will.get_subscriber().on_next(this->worker.get());
                 this->worker.set(x);
                 this->subject_setting_did.get_subscriber().on_next(x);
             }
@@ -578,6 +601,7 @@ namespace kvo
         {
             if (x.size() > 0)
             {
+                subject_insertion_index.get_subscriber().on_next(this->worker.indices_for_map(x));
                 subject_insertion_will.get_subscriber().on_next(x);
                 this->worker.insert(x);
                 subject_insertion_did.get_subscriber().on_next(x);
@@ -588,6 +612,7 @@ namespace kvo
         {
             if (indices.size() > 0)
             {
+                subject_removal_index.get_subscriber().on_next(indices);
                 rx_notify_value items = this->worker.items_at_indices(indices);
                 subject_removal_will.get_subscriber().on_next(items);
                 this->worker.remove(indices);
@@ -604,7 +629,8 @@ namespace kvo
         {
             if (x.size() > 0)
             {
-                subject_replacement_will.get_subscriber().on_next(x);
+                subject_replacement_index.get_subscriber().on_next(this->worker.indices_for_map(x));
+                subject_replacement_will.get_subscriber().on_next(this->worker.items_at_indices(this->worker.indices_for_map(x)));
                 this->worker.replace(x);
                 subject_replacement_did.get_subscriber().on_next(x);
             }

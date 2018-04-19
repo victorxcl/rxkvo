@@ -515,3 +515,225 @@ SCENARIO("kvo::collection<std::unordered_set<T>> test [will] and [did] subjects"
         }
     }
 }
+
+SCENARIO("kvo::collection<std::map<T>> test [will] and [did] subjects", "")
+{
+    GIVEN("one std::map<std::string,int> container")
+    {
+        typedef std::map<std::string,int> T_container;
+        typedef kvo::collection<T_container> T_collection;
+        typedef T_collection::rx_notify_index T_indices;
+        struct Test
+        {
+            Test()
+            {
+                C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
+                C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
+                
+                C.subject_insertion_index.get_observable().subscribe([this](auto&&x){ this->C_insertion_index = x; });
+                C.subject_insertion_will.get_observable().subscribe([this](auto&&x){ this->C_insertion_will = x; });
+                C.subject_insertion_did.get_observable().subscribe([this](auto&&x){ this->C_insertion_did = x; });
+                
+                C.subject_replacement_index.get_observable().subscribe([this](auto&&x){ this->C_replacement_index = x; });
+                C.subject_replacement_will.get_observable().subscribe([this](auto&&x){ this->C_replacement_will = x; });
+                C.subject_replacement_did.get_observable().subscribe([this](auto&&x){ this->C_replacement_did = x; });
+                
+                C.subject_removal_index.get_observable().subscribe([this](auto&&x){ this->C_removal_index = x; });
+                C.subject_removal_will.get_observable().subscribe([this](auto&&x){ this->C_removal_will = x; });
+                C.subject_removal_did.get_observable().subscribe([this](auto&&x){ this->C_removal_did = x; });
+            }
+            T_collection C;
+            T_container C_setting_will {};
+            T_container C_setting_did  {};
+            
+            T_indices   C_insertion_index {};
+            T_container C_insertion_will  {};
+            T_container C_insertion_did   {};
+            
+            T_indices   C_replacement_index {};
+            T_container C_replacement_will  {};
+            T_container C_replacement_did   {};
+            
+            T_indices   C_removal_index {};
+            T_container C_removal_will  {};
+            T_container C_removal_did   {};
+        };
+        
+        auto test = std::make_shared<Test>();
+        REQUIRE(T_container{} == test->C());
+        REQUIRE(T_container{} == test->C_setting_will);
+        REQUIRE(T_container{} == test->C_setting_did);
+        
+        THEN("setting {{A:1},{B:2},{C:3}} to the container")
+        {
+            test->C.set({{"A",1},{"B",2},{"C",3}});
+            REQUIRE(T_container{{"A",1},{"B",2},{"C",3}} == test->C());
+            REQUIRE(T_container{{"C",3},{"A",1},{"B",2}} == test->C());
+            REQUIRE(T_container{{"C",3},{"B",2},{"A",1}} == test->C());
+            REQUIRE(T_container{                       } == test->C_setting_will);
+            REQUIRE(T_container{{"A",1},{"B",2},{"C",3}} == test->C_setting_did);
+            
+            THEN("setting {{D:4},{E:5},{F:6}} to the container")
+            {
+                test->C.set({{"D",4},{"E",5},{"F",6}});
+                REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C());
+                REQUIRE(T_container{{"A",1},{"B",2},{"C",3}} == test->C_setting_will);
+                REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_setting_did);
+                
+                THEN("setting {{G:7},{H:8},{I:9}} to the container")
+                {
+                    test->C.set({{"G",7},{"H",8},{"I",9}});
+                    REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C());
+                    REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_setting_will);
+                    REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C_setting_did);
+                }
+            }
+            THEN("insert {{G:7},{H:8},{I:9}} into the container")
+            {
+                test->C.insert({{"G",7},{"H",8},{"I",9}});
+                REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}} == test->C());
+                REQUIRE(T_indices   {"G",    "H",    "I"  }  == test->C_insertion_index);
+                REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C_insertion_will);
+                REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C_insertion_did);
+
+                THEN("insert {{D:4},{E:5},{F:6}} into the container")
+                {
+                    test->C.insert({{"D",4},{"E",5},{"F",6}});
+                    REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}, {"D",4},{"E",5},{"F",6}} == test->C());
+                    REQUIRE(T_indices   {"D",    "E",    "F"  }  == test->C_insertion_index);
+                    REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_insertion_will);
+                    REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_insertion_did);
+
+                    THEN("replace {{D:4},{E:5},{F:6}} with {{D:40},{E:50},{F:60}} in the container")
+                    {
+                        test->C.replace({{"D",40},{"E",50},{"F",60}});
+                        REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}, {"D",40},{"E",50},{"F",60}} == test->C());
+                        REQUIRE(T_indices   {"D",     "E",     "F"   }  == test->C_replacement_index);
+                        REQUIRE(T_container{{"D",4 },{"E",5 },{"F",6 }} == test->C_replacement_will);
+                        REQUIRE(T_container{{"D",40},{"E",50},{"F",60}} == test->C_replacement_did);
+                    }
+
+                    THEN("remove {{D:4},{E:5},{F:6}} in the container")
+                    {
+                        test->C.remove({"D", "E", "F"});
+                        REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}} == test->C());
+                        REQUIRE(T_indices   {"D",    "E",    "F"  }  == test->C_removal_index);
+                        REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_removal_will);
+                        REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_removal_did);
+                    }
+                }
+            }
+        }
+    }
+}
+
+SCENARIO("kvo::collection<std::unordered_map<T>> test [will] and [did] subjects", "")
+{
+    GIVEN("one std::unordered_map<std::string,int> container")
+    {
+        typedef std::unordered_map<std::string,int> T_container;
+        typedef kvo::collection<T_container> T_collection;
+        typedef T_collection::rx_notify_index T_indices;
+        struct Test
+        {
+            Test()
+            {
+                C.subject_setting_will.get_observable().subscribe([this](auto&&x){ this->C_setting_will = x; });
+                C.subject_setting_did.get_observable().subscribe([this](auto&&x){ this->C_setting_did = x; });
+                
+                C.subject_insertion_index.get_observable().subscribe([this](auto&&x){ this->C_insertion_index = x; });
+                C.subject_insertion_will.get_observable().subscribe([this](auto&&x){ this->C_insertion_will = x; });
+                C.subject_insertion_did.get_observable().subscribe([this](auto&&x){ this->C_insertion_did = x; });
+                
+                C.subject_replacement_index.get_observable().subscribe([this](auto&&x){ this->C_replacement_index = x; });
+                C.subject_replacement_will.get_observable().subscribe([this](auto&&x){ this->C_replacement_will = x; });
+                C.subject_replacement_did.get_observable().subscribe([this](auto&&x){ this->C_replacement_did = x; });
+                
+                C.subject_removal_index.get_observable().subscribe([this](auto&&x){ this->C_removal_index = x; });
+                C.subject_removal_will.get_observable().subscribe([this](auto&&x){ this->C_removal_will = x; });
+                C.subject_removal_did.get_observable().subscribe([this](auto&&x){ this->C_removal_did = x; });
+            }
+            T_collection C;
+            T_container C_setting_will {};
+            T_container C_setting_did  {};
+            
+            T_indices   C_insertion_index {};
+            T_container C_insertion_will  {};
+            T_container C_insertion_did   {};
+            
+            T_indices   C_replacement_index {};
+            T_container C_replacement_will  {};
+            T_container C_replacement_did   {};
+            
+            T_indices   C_removal_index {};
+            T_container C_removal_will  {};
+            T_container C_removal_did   {};
+        };
+        
+        auto test = std::make_shared<Test>();
+        REQUIRE(T_container{} == test->C());
+        REQUIRE(T_container{} == test->C_setting_will);
+        REQUIRE(T_container{} == test->C_setting_did);
+        
+        THEN("setting {{A:1},{B:2},{C:3}} to the container")
+        {
+            test->C.set({{"A",1},{"B",2},{"C",3}});
+            REQUIRE(T_container{{"A",1},{"B",2},{"C",3}} == test->C());
+            REQUIRE(T_container{{"C",3},{"A",1},{"B",2}} == test->C());
+            REQUIRE(T_container{{"C",3},{"B",2},{"A",1}} == test->C());
+            REQUIRE(T_container{                       } == test->C_setting_will);
+            REQUIRE(T_container{{"A",1},{"B",2},{"C",3}} == test->C_setting_did);
+            
+            THEN("setting {{D:4},{E:5},{F:6}} to the container")
+            {
+                test->C.set({{"D",4},{"E",5},{"F",6}});
+                REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C());
+                REQUIRE(T_container{{"A",1},{"B",2},{"C",3}} == test->C_setting_will);
+                REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_setting_did);
+                
+                THEN("setting {{G:7},{H:8},{I:9}} to the container")
+                {
+                    test->C.set({{"G",7},{"H",8},{"I",9}});
+                    REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C());
+                    REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_setting_will);
+                    REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C_setting_did);
+                }
+            }
+            THEN("insert {{G:7},{H:8},{I:9}} into the container")
+            {
+                test->C.insert({{"G",7},{"H",8},{"I",9}});
+                REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}} == test->C());
+                REQUIRE(T_indices   {"G",    "H",    "I"  }  == test->C_insertion_index);
+                REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C_insertion_will);
+                REQUIRE(T_container{{"G",7},{"H",8},{"I",9}} == test->C_insertion_did);
+                
+                THEN("insert {{D:4},{E:5},{F:6}} into the container")
+                {
+                    test->C.insert({{"D",4},{"E",5},{"F",6}});
+                    REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}, {"D",4},{"E",5},{"F",6}} == test->C());
+                    REQUIRE(T_indices   {"D",    "E",    "F"  }  == test->C_insertion_index);
+                    REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_insertion_will);
+                    REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_insertion_did);
+                    
+                    THEN("replace {{D:4},{E:5},{F:6}} with {{D:40},{E:50},{F:60}} in the container")
+                    {
+                        test->C.replace({{"D",40},{"E",50},{"F",60}});
+                        REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}, {"D",40},{"E",50},{"F",60}} == test->C());
+                        REQUIRE(T_indices   {"D",     "E",     "F"   }  == test->C_replacement_index);
+                        REQUIRE(T_container{{"D",4 },{"E",5 },{"F",6 }} == test->C_replacement_will);
+                        REQUIRE(T_container{{"D",40},{"E",50},{"F",60}} == test->C_replacement_did);
+                    }
+                    
+                    THEN("remove {{D:4},{E:5},{F:6}} in the container")
+                    {
+                        test->C.remove({"D", "E", "F"});
+                        REQUIRE(T_container{{"A",1},{"B",2},{"C",3},{"G",7},{"H",8},{"I",9}} == test->C());
+                        REQUIRE(T_indices   {"D",    "E",    "F"  }  == test->C_removal_index);
+                        REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_removal_will);
+                        REQUIRE(T_container{{"D",4},{"E",5},{"F",6}} == test->C_removal_did);
+                    }
+                }
+            }
+        }
+    }
+}
