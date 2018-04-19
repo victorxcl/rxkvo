@@ -383,7 +383,7 @@ namespace kvo
         {
             if (this->get().size() > 0 || (this->get().size() == 0 && x.size() > 0))
             {
-                this->subject_setting_will.get_subscriber().on_next(x);
+                this->subject_setting_will.get_subscriber().on_next(this->worker.get());
                 this->worker.set(x);
                 this->subject_setting_did.get_subscriber().on_next(x);
             }
