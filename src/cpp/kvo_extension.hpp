@@ -27,17 +27,35 @@ namespace kvo
         return __keypath__::switch_map(std::forward<Observable>(o), std::forward<F>(f), std::forward<FN>(fn)...);
     }
     
-    
     template<typename T>
     class variable
     {
         typedef variable<T> self_t;
     public:
+        rxcpp::subjects::subject <T> subject_will;
+        rxcpp::subjects::behavior<T>&subject_did = subject;
         rxcpp::subjects::behavior<T> subject = rxcpp::subjects::behavior<T>(T());
+        variable() = default;
+        variable(const self_t&o)
+        {
+            this->subject_will = o.subject_will;
+            this->subject = o.subject;
+        }
+        
+        self_t&operator=(const self_t&o)
+        {
+            if (this != &o)
+            {
+                this->subject_will = o.subject_will;
+                this->subject = o.subject;
+            }
+            return *this;
+        }
         
         void set(const T&x)
         {
-            this->subject.get_subscriber().on_next(x);
+            this->subject_will.get_subscriber().on_next(this->get());
+            this->subject_did.get_subscriber().on_next(x);
         }
         T get() const
         {
