@@ -36,6 +36,7 @@ namespace kvo
         rxcpp::subjects::behavior<T>&subject_did = subject;
         rxcpp::subjects::behavior<T> subject = rxcpp::subjects::behavior<T>(T());
         variable() = default;
+        variable(T&&o):subject(std::forward<T>(o)) {}
         variable(const self_t&o)
         {
             this->subject_will = o.subject_will;
