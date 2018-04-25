@@ -21,8 +21,10 @@ set(RX_KVO_HEADERS "${PROJECT_SOURCE_DIR}/../../src/cpp/kvo_extension.hpp")
 add_executable(RxKVO-test ${RX_KVO_HEADERS} 
     test_basic.cpp 
     test_basic_initialize.cpp 
+	test_course_introduction.cpp
+	test_course_login_register.cpp
+	test_course_network.cpp
     test_library.cpp
-    test_login_register.cpp
     test_mail.cpp
     test_plan.cpp
     test_school.cpp
