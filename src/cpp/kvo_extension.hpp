@@ -27,8 +27,53 @@ namespace kvo
         return __keypath__::switch_map(std::forward<Observable>(o), std::forward<F>(f), std::forward<FN>(fn)...);
     }
     
+    namespace __utils__{
+//        template<typename ... T> struct inherit{};
+        template<typename T,typename ... T_next> struct inherit:public T, public inherit<T_next ...>{};
+        template<typename ... T_next> struct inherit<void,T_next...>:public inherit<T_next ...>{};
+//        template<typename T> struct inherit<T>:public T{};
+        template<> struct inherit<void>{};
+    }
+    
+    namespace __operators__{
+        template<typename T, typename self_t> struct increment_by_one
+        {
+            self_t& operator++(self_t&self)
+            {
+                self.set(++(self()));
+                return self;
+            }
+        };
+        template<typename T, typename self_t> struct plus_assign
+        {
+            self_t& operator+=(T&&x)
+            {
+                auto&self = static_cast<self_t&>(*this);
+                self = self + x;
+                return self;
+            }
+        };
+        
+        template<typename TT, typename T_self_t> struct enable
+        {
+            template<typename T,typename self_t> static void operator_for_increment_by_one(...);
+            template<typename T,typename self_t>
+            static typename std::enable_if<sizeof(++std::declval<T>()),increment_by_one<T, self_t>>::type& operator_for_increment_by_one(int);
+            
+            template<typename T,typename self_t> static void operator_for_plus_assign(...);
+            template<typename T,typename self_t>
+            static typename std::enable_if<sizeof(std::declval<T>()+=std::declval<T>()),plus_assign<T, self_t>>::type& operator_for_plus_assign(int);
+            
+            typedef __utils__::inherit<
+            decltype(operator_for_increment_by_one<TT, T_self_t>(0)),
+            decltype(operator_for_plus_assign<TT, T_self_t>(0)),
+            void// must ended with a VOID type
+            > operators;
+        };
+    }
+    
     template<typename T>
-    class variable
+    class variable:public __operators__::enable<T,variable<T>>::operators
     {
         typedef variable<T> self_t;
     public:
