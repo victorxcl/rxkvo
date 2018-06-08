@@ -5,21 +5,19 @@
 
 #pragma warning(disable:4503)
 
-#define SHOULE_DUMP_XML    0
+#define SHOULE_DUMP_XML    1
 
 SCENARIO("the first plan case for rxkvo", "")
 {
     GIVEN("three numbers: a, b, c")
     {
-        struct Plan
+        struct Keynote
         {
-            std::atomic<int> t{0};
-            kvo::variable<int> a{1};
-            kvo::variable<int> b{2};
-            kvo::variable<int> c{0};
+            kvo::variable<int> line{0};
+            kvo::variable<int> time{0};
             kvo::variable<std::string> statement;
             
-            Plan()
+            Keynote()
             {
 #if SHOULE_DUMP_XML
                 using namespace std::literals::string_literals;
@@ -28,63 +26,55 @@ SCENARIO("the first plan case for rxkvo", "")
                 .finally([](){ std::cout<<"</plan>"<<std::endl; })
                 .subscribe([](auto x){ std::cout<<x<<std::endl; });
                 
-                a.subject.get_observable().subscribe([this](auto x){
-                    statement="<report variable=\"a\" t=\""+std::to_string(t)+"\">"+std::to_string(x)+"</report>";
-                });
-                b.subject.get_observable().subscribe([this](auto x){
-                    statement="<report variable=\"b\" t=\""+std::to_string(t)+"\">"+std::to_string(x)+"</report>";
-                });
-                c.subject.get_observable().subscribe([this](auto x){
-                    statement="<report variable=\"c\" t=\""+std::to_string(t)+"\">"+std::to_string(x)+"</report>";
-                });
+                line.subject.get_observable().subscribe([this](auto x){ statement = "line = " + std::to_string(x); });
+                time.subject.get_observable().subscribe([this](auto x){ statement = "time = " + std::to_string(x); });
 #endif
             }
-            ~Plan() { statement.subject.get_subscriber().on_completed(); }
-            
-            void create_expression()
-            {
-                t++;
-                auto expr = u8R"===(<plus><variable name="a"/><variable name="b"/></plus>)===";
-                statement = "<assign variable=\"c\" t=\""+ std::to_string(t) + "\">" + expr + "</assign>";
-                a.subject.get_observable()
-                .combine_latest(b.subject.get_observable())
-                .subscribe([this](auto&&x){
-                    c = std::get<0>(x) + std::get<1>(x);
-                });
-            }
-            
-            void assign_a_with(int v)
-            {
-                t++;
-                statement = "<assign variable=\"a\" t=\""+ std::to_string(t) + "\">" + std::to_string(v) + "</assign>";
-                a = v;
-            }
-            void assign_b_with(int v)
-            {
-                t++;
-                statement = "<assign variable=\"b\" t=\""+ std::to_string(t) + "\">" + std::to_string(v) + "</assign>";
-                b = v;
-            }
-        }plan;
-
-        REQUIRE(1 == plan.a);
-        REQUIRE(2 == plan.b);
-        REQUIRE(0 == plan.c);
+            ~Keynote() { statement.subject.get_subscriber().on_completed(); }
+        }keynote;
         
-        THEN("c subscribe to a+b")
+        
+        kvo::variable<int> a{1};
+        kvo::variable<int> b{2};
+        kvo::variable<int> c{0};
+
+        REQUIRE(1 == a);
+        REQUIRE(2 == b);
+        REQUIRE(0 == c);
+        
+        a.subject.get_observable().subscribe([&keynote](auto x){ keynote.statement = "a = " + std::to_string(x); });
+        b.subject.get_observable().subscribe([&keynote](auto x){ keynote.statement = "b = " + std::to_string(x); });
+        c.subject.get_observable().subscribe([&keynote](auto x){ keynote.statement = "c = " + std::to_string(x); });
+        
+        THEN("build expression for c = a + b")
         {
-            plan.create_expression();
-            REQUIRE(1+2 == plan.c);
-            THEN("assign 10 to a")
+            a.subject.get_observable()
+            .combine_latest(b.subject.get_observable())
+            .subscribe([&c](auto&&x){
+                c = std::get<0>(x) + std::get<1>(x);
+            });
+            
+            REQUIRE(1 == a);
+            REQUIRE(2 == b);
+            REQUIRE(3 == c);
+            
+            float x = 1.0;
+            x++;
+            x--;
+            
+#pragma push(_)
+#define _(n) (keynote.line = n, keynote.time=keynote.time+1)
+            THEN("build the plan for keynote")
             {
-                plan.assign_a_with(10);
-                REQUIRE(10+2 == plan.c);
-                AND_THEN("assign 20 to b")
-                {
-                    plan.assign_b_with(20);
-                    REQUIRE(10+20 == plan.c);
-                }
+                _(1); a = 0;
+                _(2); b = 0;
+                for (int i=0; _(3),i<5; i++)
+                { _(4); a = a + 1; }
+                for (int i=0; _(5),i<5; i++)
+                { _(6); b = b + 1; }
+                _(7);
             }
+#pragma pop(_)
         }
     }
 }
