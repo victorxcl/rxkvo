@@ -32,14 +32,15 @@ SCENARIO("test kvo::variable<T> operator", "")
 {
     GIVEN("a integral variable named n")
     {
-        kvo::variable<int> n{5};
+        const int N = 5;
+        kvo::variable<int> n{N};
         
-        REQUIRE(5 == n);
+        REQUIRE(N == n);
         
         THEN("++n")
         {
             auto&m = ++n;
-            REQUIRE(6 == n);
+            REQUIRE(N+1 == n);
             REQUIRE(m.get() == n.get());
         }
         
@@ -48,14 +49,14 @@ SCENARIO("test kvo::variable<T> operator", "")
 //            AND_THEN("rvalue for m")
 //            {
 //                auto&&m = n++;
-//                REQUIRE(6 == n);
-//                REQUIRE(m.get() == n.get()-1);
+//                REQUIRE(N+1 == n);
+//                REQUIRE(m == N);
 //            }
 //            THEN("assign to m")
 //            {
 //                auto m = n++;
-//                REQUIRE(6 == n);
-//                REQUIRE(m.get() == n.get()-1);
+//                REQUIRE(N+1 == n);
+//                REQUIRE(m == N);
 //            }
         }
 
@@ -72,29 +73,49 @@ SCENARIO("test kvo::variable<T> operator", "")
 //            {
 //                auto&&m = n--;
 //                REQUIRE(4 == n);
-//                REQUIRE(m.get() == n.get()+1);
+//                REQUIRE(m == N-1);
 //            }
 //            THEN("assign to m")
 //            {
 //                auto m = n--;
 //                REQUIRE(4 == n);
-//                REQUIRE(m.get() == n.get()+1);
+//                REQUIRE(m == N);
 //            }
         }
         
         THEN("n+=2")
         {
             auto&&m = n+=2;
-            REQUIRE(7 == n);
+            REQUIRE(N+2 == n);
             REQUIRE(m.get() == n.get());
         }
         
         THEN("n-=2")
         {
             auto&&m = n-=2;
-            REQUIRE(3 == n);
+            REQUIRE(N-2 == n);
             REQUIRE(m.get() == n.get());
         }
+        
+        THEN("n*=2")
+        {
+            auto&&m = n*=2;
+            REQUIRE(N*2 == n);
+            REQUIRE(m.get() == n.get());
+        }
+        THEN("n/=2")
+        {
+            auto&&m = n/=2;
+            REQUIRE(N/2 == n);
+            REQUIRE(m.get() == n.get());
+        }
+        THEN("n%=2")
+        {
+            auto&&m = n%=2;
+            REQUIRE(N%2 == n);
+            REQUIRE(m.get() == n.get());
+        }
+
     }
     GIVEN("a string variable named s")
     {

@@ -81,7 +81,8 @@ namespace kvo
             self_t& operator+=(T&&x)
             {
                 auto&self = static_cast<self_t&>(*this);
-                self.set(self.get() + x);
+                auto&&raw = self.get();
+                self.set(raw += x);
                 return self;
             }
         };
@@ -91,7 +92,41 @@ namespace kvo
             self_t& operator-=(T&&x)
             {
                 auto&self = static_cast<self_t&>(*this);
-                self.set(self.get() - x);
+                auto&&raw = self.get();
+                self.set(raw -= x);
+                return self;
+            }
+        };
+        
+        template<typename T, typename self_t> struct multiply_assign
+        {
+            self_t& operator*=(T&&x)
+            {
+                auto&self = static_cast<self_t&>(*this);
+                auto&&raw = self.get();
+                self.set(raw *= x);
+                return self;
+            }
+        };
+        
+        template<typename T, typename self_t> struct divide_assign
+        {
+            self_t& operator/=(T&&x)
+            {
+                auto&self = static_cast<self_t&>(*this);
+                auto&&raw = self.get();
+                self.set(raw /= x);
+                return self;
+            }
+        };
+        
+        template<typename T, typename self_t> struct percent_assign
+        {
+            self_t& operator%=(T&&x)
+            {
+                auto&self = static_cast<self_t&>(*this);
+                auto&&raw = self.get();
+                self.set(raw %= x);
                 return self;
             }
         };
@@ -136,7 +171,28 @@ namespace kvo
             struct operator_for_minus_assign
             {
                 template<typename T,typename self_t> static void test(...);
-                template<typename T,typename self_t> static minus_assign<T, self_t> test(T&&x){ x+=std::declval<T>(); return minus_assign<T, self_t>();}
+                template<typename T,typename self_t> static minus_assign<T, self_t> test(T&&x){ x-=std::declval<T>(); return minus_assign<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
+            
+            struct operator_for_multiply_assign
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static multiply_assign<T, self_t> test(T&&x){ x*=std::declval<T>(); return multiply_assign<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
+            
+            struct operator_for_divide_assign
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static divide_assign<T, self_t> test(T&&x){ x/=std::declval<T>(); return divide_assign<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
+            
+            struct operator_for_percent_assign
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static percent_assign<T, self_t> test(T&&x){ x/=std::declval<T>(); return percent_assign<T, self_t>();}
                 typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
             };
             
@@ -146,8 +202,11 @@ namespace kvo
             /**///typename operator_for_post_decrement::try_to_enable,// it can not work correct as C++ semantics
             /**/typename operator_for_pre_decrement::try_to_enable,
             /**/typename operator_for_plus_assign::try_to_enable,
-            /**/typename operator_for_minus_assign::try_to_enable
-            > all_operators;
+            /**/typename operator_for_minus_assign::try_to_enable,
+            /**/typename operator_for_multiply_assign::try_to_enable,
+            /**/typename operator_for_divide_assign::try_to_enable,
+            /**/typename operator_for_percent_assign::try_to_enable,
+            void> all_operators;
         };
     }
     
@@ -160,7 +219,8 @@ namespace kvo
         rxcpp::subjects::behavior<T>&subject_did = subject;
         rxcpp::subjects::behavior<T> subject = rxcpp::subjects::behavior<T>(T());
         variable() = default;
-        variable(T&&o):subject(std::forward<T>(o)) {}
+        explicit variable(T&&o):subject(std::forward<T>(o)) {}
+        explicit variable(const T&o):subject(o) {}
         variable(const self_t&o)
         {
             this->subject_will = o.subject_will;
