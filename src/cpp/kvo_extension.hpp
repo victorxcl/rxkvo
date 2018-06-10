@@ -192,7 +192,7 @@ namespace kvo
             struct operator_for_percent_assign
             {
                 template<typename T,typename self_t> static void test(...);
-                template<typename T,typename self_t> static percent_assign<T, self_t> test(T&&x){ x/=std::declval<T>(); return percent_assign<T, self_t>();}
+                template<typename T,typename self_t> static percent_assign<T, self_t> test(T&&x){ x%=std::declval<T>(); return percent_assign<T, self_t>();}
                 typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
             };
             
