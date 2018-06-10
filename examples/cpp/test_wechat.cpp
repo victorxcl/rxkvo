@@ -189,7 +189,7 @@ namespace wechat{
                 rxcpp::observable<>::empty<decltype(chats)::collection_type>()
                 .merge(chats.subject_setting.get_observable(),
                        chats.subject_insertion.get_observable())
-                .map([this](const decltype(chats)::collection_type&x){
+                .map([](const decltype(chats)::collection_type&x){
                     return rxcpp::observable<>::iterate(x)
                     .flat_map([](std::shared_ptr<Chat>x){
                         return x->unreadCount.subject.get_observable();
