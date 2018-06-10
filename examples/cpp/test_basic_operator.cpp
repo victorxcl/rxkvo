@@ -46,18 +46,18 @@ SCENARIO("test kvo::variable<T> operator", "")
         
         THEN("n++")
         {
-//            AND_THEN("rvalue for m")
-//            {
-//                auto&&m = n++;
-//                REQUIRE(N+1 == n);
-//                REQUIRE(m == N);
-//            }
-//            THEN("assign to m")
-//            {
-//                auto m = n++;
-//                REQUIRE(N+1 == n);
-//                REQUIRE(m == N);
-//            }
+            AND_THEN("rvalue for m")
+            {
+                auto&&m = n++;
+                REQUIRE(N+1 == n);
+                REQUIRE(m == N);
+            }
+            THEN("assign to m")
+            {
+                auto m = n++;
+                REQUIRE(N+1 == n);
+                REQUIRE(m == N);
+            }
         }
 
         THEN("--n")
@@ -69,18 +69,18 @@ SCENARIO("test kvo::variable<T> operator", "")
         
         THEN("n--")
         {
-//            AND_THEN("rvalue for m")
-//            {
-//                auto&&m = n--;
-//                REQUIRE(4 == n);
-//                REQUIRE(m == N-1);
-//            }
-//            THEN("assign to m")
-//            {
-//                auto m = n--;
-//                REQUIRE(4 == n);
-//                REQUIRE(m == N);
-//            }
+            AND_THEN("rvalue for m")
+            {
+                auto&&m = n--;
+                REQUIRE(4 == n);
+                REQUIRE(m == N);
+            }
+            THEN("assign to m")
+            {
+                auto m = n--;
+                REQUIRE(4 == n);
+                REQUIRE(m == N);
+            }
         }
         
         THEN("n+=2")

@@ -39,8 +39,8 @@ namespace kvo
             self_t operator++(int)
             {
                 auto&self = static_cast<self_t&>(*this);
-                self_t older = self;
-                self.set(self.get()+1);
+                self_t older{self.get()};
+                auto&&raw = self.get(); raw++; self.set(raw);
                 return older;
             }
         };
@@ -50,7 +50,7 @@ namespace kvo
             self_t& operator++()
             {
                 auto&self = static_cast<self_t&>(*this);
-                self.set(self.get()+1);
+                auto&&raw = self.get(); ++raw; self.set(raw);
                 return self;
             }
         };
@@ -60,8 +60,8 @@ namespace kvo
             self_t operator--(int)
             {
                 auto&self = static_cast<self_t&>(*this);
-                self_t older = self;
-                self.set(self.get()-1);
+                self_t older{self.get()};
+                auto&&raw = self.get(); raw--; self.set(raw);
                 return older;
             }
         };
@@ -71,7 +71,7 @@ namespace kvo
             self_t& operator--()
             {
                 auto&self = static_cast<self_t&>(*this);
-                self.set(self.get()-1);
+                auto&&raw = self.get(); --raw; self.set(raw);
                 return self;
             }
         };
@@ -197,9 +197,9 @@ namespace kvo
             };
             
             typedef __utils__::inherit<
-            /**///typename operator_for_post_increment::try_to_enable,// it can not work correct as C++ semantics
+            /**/typename operator_for_post_increment::try_to_enable,
             /**/typename operator_for_pre_increment::try_to_enable,
-            /**///typename operator_for_post_decrement::try_to_enable,// it can not work correct as C++ semantics
+            /**/typename operator_for_post_decrement::try_to_enable,
             /**/typename operator_for_pre_decrement::try_to_enable,
             /**/typename operator_for_plus_assign::try_to_enable,
             /**/typename operator_for_minus_assign::try_to_enable,
