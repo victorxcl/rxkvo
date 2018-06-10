@@ -8,10 +8,10 @@
 SCENARIO("test kvo::variable<T> operator", "")
 {
     {
-        struct A{};
-        struct B{};
-        struct C{};
-        kvo::__utils__::inherit<A,B,C,void> x;
+        struct A{int a{1};};
+        struct B{int b{2};};
+        struct C{int c{3};};
+        kvo::__utils__::inherit<A,B,C> x;
         int a = 0;
         a++;
     }
@@ -23,7 +23,7 @@ SCENARIO("test kvo::variable<T> operator", "")
         
         REQUIRE(1 == n);
         
-//        ++n; REQUIRE(2 == n);
+        ++n; REQUIRE(2 == n);
 //
 //        n++; REQUIRE(3 == n);
 //

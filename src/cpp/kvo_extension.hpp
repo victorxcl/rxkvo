@@ -28,11 +28,9 @@ namespace kvo
     }
     
     namespace __utils__{
-//        template<typename ... T> struct inherit{};
-        template<typename T,typename ... T_next> struct inherit:public T, public inherit<T_next ...>{};
+        template<typename ... T> struct inherit{};
+        template<typename T,typename ... T_next> struct inherit<T,T_next...>:public T, public inherit<T_next ...>{};
         template<typename ... T_next> struct inherit<void,T_next...>:public inherit<T_next ...>{};
-//        template<typename T> struct inherit<T>:public T{};
-        template<> struct inherit<void>{};
     }
     
     namespace __operators__{
