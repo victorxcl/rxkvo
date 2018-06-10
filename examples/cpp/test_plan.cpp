@@ -1,6 +1,7 @@
 #include <rxcpp/rx.hpp>
 #include <catch.hpp>
 #include <unordered_map>
+//#include <string>
 #include "kvo_extension.hpp"
 
 #pragma warning(disable:4503)
@@ -22,12 +23,10 @@ SCENARIO("the first plan case for rxkvo", "")
 #if SHOULE_DUMP_XML
                 using namespace std::literals::string_literals;
                 statement.subject.get_observable()
-                .start_with("<plan expression=\"c=a+b\">"s)
-                .finally([](){ std::cout<<"</plan>"<<std::endl; })
+                .start_with("<keynote expression=\"c=a+b\">"s)
+                .finally([](){ std::cout<<"</keynote>"<<std::endl; })
+                .filter([](auto x){ return !x.empty(); })
                 .subscribe([](auto x){ std::cout<<x<<std::endl; });
-                
-                line.subject.get_observable().subscribe([this](auto x){ statement = "line = " + std::to_string(x); });
-                time.subject.get_observable().subscribe([this](auto x){ statement = "time = " + std::to_string(x); });
 #endif
             }
             ~Keynote() { statement.subject.get_subscriber().on_completed(); }
@@ -42,9 +41,20 @@ SCENARIO("the first plan case for rxkvo", "")
         REQUIRE(2 == b);
         REQUIRE(0 == c);
         
-        a.subject.get_observable().subscribe([&keynote](auto x){ keynote.statement = "a = " + std::to_string(x); });
-        b.subject.get_observable().subscribe([&keynote](auto x){ keynote.statement = "b = " + std::to_string(x); });
-        c.subject.get_observable().subscribe([&keynote](auto x){ keynote.statement = "c = " + std::to_string(x); });
+        using namespace rxcpp::operators;
+        using namespace std::literals::string_literals;
+        
+        (keynote.line.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<line time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        
+        (a.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<a time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        
+        (a.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<b time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        
+        (c.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<c time=\""+time+"\" value=\""+x+"\"/>"s; }));
         
         THEN("build expression for c = a + b")
         {
@@ -58,12 +68,8 @@ SCENARIO("the first plan case for rxkvo", "")
             REQUIRE(2 == b);
             REQUIRE(3 == c);
             
-            float x = 1.0;
-            x++;
-            x--;
-            
 #pragma push(_)
-#define _(n) (keynote.line = n, keynote.time=keynote.time+1)
+#define _(n) (keynote.line = n, keynote.time++)
             THEN("build the plan for keynote")
             {
                 _(1); a = 0;
