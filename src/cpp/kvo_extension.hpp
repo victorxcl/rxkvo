@@ -33,45 +33,126 @@ namespace kvo
         template<typename ... T_next> struct inherit<void,T_next...>:public inherit<T_next ...>{};
     }
     
-    namespace __operators__{
-        template<typename T, typename self_t> struct increment_by_one
+    namespace __operators__ {
+        template<typename T, typename self_t> struct post_increment
         {
-            self_t& operator++(self_t&self)
+            self_t operator++(int)
             {
-                self.set(++(self()));
+                auto&self = static_cast<self_t&>(*this);
+                self_t older = self;
+                self.set(self.get()+1);
+                return older;
+            }
+        };
+        
+        template<typename T, typename self_t> struct pre_increment
+        {
+            self_t& operator++()
+            {
+                auto&self = static_cast<self_t&>(*this);
+                self.set(self.get()+1);
                 return self;
             }
         };
+        
+        template<typename T, typename self_t> struct post_decrement
+        {
+            self_t operator--(int)
+            {
+                auto&self = static_cast<self_t&>(*this);
+                self_t older = self;
+                self.set(self.get()-1);
+                return older;
+            }
+        };
+        
+        template<typename T, typename self_t> struct pre_decrement
+        {
+            self_t& operator--()
+            {
+                auto&self = static_cast<self_t&>(*this);
+                self.set(self.get()-1);
+                return self;
+            }
+        };
+        
         template<typename T, typename self_t> struct plus_assign
         {
             self_t& operator+=(T&&x)
             {
                 auto&self = static_cast<self_t&>(*this);
-                self = self + x;
+                self.set(self.get() + x);
                 return self;
             }
         };
         
-        template<typename TT, typename T_self_t> struct enable
+        template<typename T, typename self_t> struct minus_assign
         {
-            template<typename T,typename self_t> static void operator_for_increment_by_one(...);
-            template<typename T,typename self_t>
-            static typename std::enable_if<sizeof(++std::declval<T>()),increment_by_one<T, self_t>>::type& operator_for_increment_by_one(int);
+            self_t& operator-=(T&&x)
+            {
+                auto&self = static_cast<self_t&>(*this);
+                self.set(self.get() - x);
+                return self;
+            }
+        };
+        
+        template<typename T_T, typename T_self_t> struct enable
+        {
+            struct operator_for_post_increment
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static post_increment<T, self_t> test(T&&x){ x++; return post_increment<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
             
-            template<typename T,typename self_t> static void operator_for_plus_assign(...);
-            template<typename T,typename self_t>
-            static typename std::enable_if<sizeof(std::declval<T>()+=std::declval<T>()),plus_assign<T, self_t>>::type& operator_for_plus_assign(int);
+            struct operator_for_pre_increment
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static pre_increment<T, self_t> test(T&&x){ ++x; return pre_increment<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
+            
+            struct operator_for_post_decrement
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static post_decrement<T, self_t> test(T&&x){ x--; return post_decrement<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
+            
+            struct operator_for_pre_decrement
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static pre_decrement<T, self_t> test(T&&x){ --x; return pre_decrement<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
+            
+            struct operator_for_plus_assign
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static plus_assign<T, self_t> test(T&&x){ x+=std::declval<T>(); return plus_assign<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
+            
+            struct operator_for_minus_assign
+            {
+                template<typename T,typename self_t> static void test(...);
+                template<typename T,typename self_t> static minus_assign<T, self_t> test(T&&x){ x+=std::declval<T>(); return minus_assign<T, self_t>();}
+                typedef decltype(test<T_T,T_self_t>(std::declval<T_T>())) try_to_enable;
+            };
             
             typedef __utils__::inherit<
-            decltype(operator_for_increment_by_one<TT, T_self_t>(0)),
-            decltype(operator_for_plus_assign<TT, T_self_t>(0)),
-            void// must ended with a VOID type
-            > operators;
+            /**///typename operator_for_post_increment::try_to_enable,// it can not work correct as C++ semantics
+            /**/typename operator_for_pre_increment::try_to_enable,
+            /**///typename operator_for_post_decrement::try_to_enable,// it can not work correct as C++ semantics
+            /**/typename operator_for_pre_decrement::try_to_enable,
+            /**/typename operator_for_plus_assign::try_to_enable,
+            /**/typename operator_for_minus_assign::try_to_enable
+            > all_operators;
         };
     }
     
     template<typename T>
-    class variable:public __operators__::enable<T,variable<T>>::operators
+    class variable:public __operators__::enable<T,variable<T>>::all_operators
     {
         typedef variable<T> self_t;
     public:
