@@ -45,16 +45,16 @@ SCENARIO("the first plan case for rxkvo", "")
         using namespace std::literals::string_literals;
         
         (keynote.line.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<line time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"line\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
         
         (a.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<a time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"a\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
         
         (a.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<b time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"b\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
         
         (c.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<c time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"c\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
         
         THEN("build expression for c = a + b")
         {
