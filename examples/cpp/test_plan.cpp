@@ -44,17 +44,19 @@ SCENARIO("the first plan case for rxkvo", "")
         using namespace rxcpp::operators;
         using namespace std::literals::string_literals;
         
-        (keynote.line.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"line\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
-        
-        (a.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"a\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
-        
-        (a.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"b\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
-        
-        (c.subject.get_observable()|with_latest_from([](auto x, auto time){ return std::make_tuple(std::to_string(time),std::to_string(x)); }, keynote.time.subject.get_observable()))
-        .subscribe(rxcpp::util::apply_to([&keynote](auto time, auto x){ keynote.statement = "<rx object=\"c\" time=\""+time+"\" value=\""+x+"\"/>"s; }));
+        keynote.line.subject.get_observable()
+        .filter([](auto line){ return line > 0; })
+        .with_latest_from([](auto line, auto time, auto a, auto b, auto c){
+            return std::make_tuple(std::to_string(line),std::to_string(time),std::to_string(a),std::to_string(b),std::to_string(c));
+        }, keynote.time.subject.get_observable(), a.subject.get_observable(), b.subject.get_observable(), c.subject.get_observable())
+        .subscribe(rxcpp::util::apply_to([&keynote](auto line, auto time, auto a, auto b, auto c){
+            keynote.statement = "<frame"s + " time=\""s + time + "\""s + ">"s
+            + "<object"s + " name=\"line\" value=\""s + line + "\""s + "/>"
+            + "<object"s + " name=\"a\" value=\""s + a + "\""s + "/>"
+            + "<object"s + " name=\"b\" value=\""s + b + "\""s + "/>"
+            + "<object"s + " name=\"c\" value=\""s + c + "\""s + "/>"
+            + "</frame>";
+        }));
         
         THEN("build expression for c = a + b")
         {
